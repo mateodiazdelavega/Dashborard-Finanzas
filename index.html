@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
+<meta name="theme-color" content="#ffffff">
+<title>Finanzas Personales</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --text: #191919;
+  --muted: #9b9a97;
+  --border: #edecea;
+  --accent: #2f6feD;
+  --accent-soft: #eef3fe;
+  --red: #d9534f;
+  --green: #2f9e60;
+  --yellow: #d99a2b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 15px; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 620px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* header */
+.top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.top h1 { font-size: 17px; font-weight: 600; margin: 0; }
+.top-links { display: flex; gap: 14px; }
+.top-links a, .top-links button {
+  font-size: 12.5px; color: var(--muted); cursor: pointer; background: none; border: none; padding: 0;
+  font-family: inherit; text-decoration: none;
+}
+.top-links a:hover, .top-links button:hover { color: var(--text); }
+
+.month-row { margin-bottom: 28px; }
+select#monthSelect {
+  border: none; background: none; color: var(--muted); font-size: 13px; font-family: inherit;
+  padding: 0; -webkit-appearance: none; cursor: pointer;
+}
+
+/* tabs */
+.tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+.tab { font-size: 13.5px; font-weight: 500; color: var(--muted); padding: 10px 0; cursor: pointer;
+  border: none; background: none; font-family: inherit; border-bottom: 1.5px solid transparent; margin-bottom: -1px; }
+.tab.active { color: var(--text); border-bottom-color: var(--text); }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* hero */
+.hero-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.hero-number { font-size: 52px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 6px; }
+.hero-sub { font-size: 13px; color: var(--muted); min-height: 16px; margin-bottom: 38px; }
+
+/* category list */
+.section-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 14px; }
+.cat-row { padding: 12px 0; border-bottom: 1px solid var(--border); position: relative; }
+.cat-row:last-child { border-bottom: none; }
+.cat-row-top { display: flex; justify-content: space-between; font-size: 14.5px; margin-bottom: 7px; }
+.cat-row-top .name { font-weight: 500; }
+.cat-bar-bg { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 2px; }
+.cat-budget-note { font-size: 11.5px; margin-top: 6px; }
+.empty { color: var(--muted); font-size: 13.5px; padding: 20px 0; }
+
+/* secondary */
+.secondary { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--border); }
+.secondary .section-label { margin-bottom: 18px; }
+canvas#chartAhorro { max-height: 160px; }
+
+/* cargar tab */
+.field-block { margin-bottom: 30px; }
+.field-block .section-label { margin-bottom: 16px; }
+.cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.cat-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px;
+  border-radius: 10px; border: 1px solid var(--border); background: none; cursor: pointer;
+  color: var(--text); font-weight: 500; font-size: 11.5px; font-family: inherit;
+}
+.cat-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
+.cat-btn.active { border-color: var(--text); background: #fafafa; }
+.row { display: flex; gap: 10px; margin-bottom: 10px; }
+.row > * { flex: 1; min-width: 0; }
+input, input[type=date], input[type=month], input[type=number], input[type=text] {
+  border: none; border-bottom: 1px solid var(--border); padding: 10px 2px; font-size: 14px;
+  font-family: inherit; color: var(--text); background: none; outline: none; width: 100%;
+}
+input:focus { border-bottom-color: var(--text); }
+.amount-input { font-size: 24px; font-weight: 600; }
+.medio-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.chip {
+  border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; font-size: 12.5px;
+  cursor: pointer; background: none; color: var(--muted); font-family: inherit;
+}
+.chip.active { border-color: var(--text); color: var(--text); }
+.btn {
+  border: none; background: var(--text); color: #fff; padding: 12px 20px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%;
+}
+.btn:hover { opacity: .85; }
+
+.mic-btn {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px;
+  border: 1px solid var(--border); border-radius: 999px; padding: 7px 14px;
+  background: none; color: var(--text); font-size: 12.5px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+.mic-btn:hover { border-color: var(--text); }
+.mic-btn:disabled { color: var(--muted); cursor: not-allowed; opacity: .6; }
+.mic-btn.listening { border-color: var(--red); color: var(--red); }
+
+/* historial tab */
+.hist-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.hist-row:last-child { border-bottom: none; }
+.hist-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.hist-meta { flex: 1; min-width: 0; }
+.hist-meta .cat { font-size: 14px; font-weight: 500; }
+.hist-meta .desc { font-size: 12px; color: var(--muted); }
+.hist-amt { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.hist-del { color: var(--muted); cursor: pointer; font-size: 15px; padding: 2px 4px; }
+.hist-del:hover { color: var(--red); }
+.list-scroll { max-height: 420px; overflow-y: auto; }
+.danger-link { margin-top: 14px; color: var(--muted); }
+.danger-link:hover { color: var(--red); }
+
+/* modal */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(20,20,20,.35); display: none;
+  align-items: center; justify-content: center; z-index: 50; padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal { background: #fff; border-radius: 12px; padding: 28px; width: 380px; max-width: 100%; }
+.modal h3 { margin: 0 0 20px 0; font-size: 16px; font-weight: 600; }
+.f { margin-bottom: 16px; }
+.f label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.link-btn { background: none; border: none; font-family: inherit; font-size: 13.5px; color: var(--muted); cursor: pointer; padding: 8px 4px; }
+.link-btn:hover { color: var(--text); }
+
+/* categorías/presupuestos en ajustes */
+.cat-setting-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.cat-setting-row:last-child { border-bottom: none; }
+.cat-setting-name { flex: 1; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-color-input { width: 22px; height: 22px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
+.cat-budget-input { width: 90px; flex: none; font-size: 13px; }
+.cat-del { color: var(--muted); cursor: pointer; font-size: 14px; flex-shrink: 0; }
+.cat-del:hover { color: var(--red); }
+.cat-add-row { align-items: center; margin-top: 10px; }
+.cat-add-row input[type=color] { flex: none; width: 28px; height: 28px; }
+.cat-add-row #btnAddCat { flex: none; white-space: nowrap; }
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px;
+  opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60;
+}
+.toast.show { opacity: 1; }
+
+</style>
+<script src="./vendor/chart.umd.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Finanzas</h1>
+    <div class="top-links">
+      <button id="btnSettings">Ajustes</button>
+      <button id="btnImport">Importar</button>
+      <button id="btnExport">Exportar</button>
+      <input type="file" id="fileImport" accept="application/json" style="display:none">
+    </div>
+  </div>
+  <div class="month-row"><select id="monthSelect"></select></div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="resumen">Resumen</button>
+    <button class="tab" data-tab="cargar">Cargar</button>
+    <button class="tab" data-tab="historial">Historial</button>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="panel active" data-panel="resumen">
+    <div class="hero-label" id="heroLabel">Gastado en julio</div>
+    <div class="hero-number" id="heroNumber">$0</div>
+    <div class="hero-sub" id="heroProjection"></div>
+
+    <div class="section-label">Categorías principales</div>
+    <div id="catList"></div>
+
+    <div class="secondary">
+      <div class="section-label">Ahorro por mes</div>
+      <canvas id="chartAhorro" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- CARGAR -->
+  <div class="panel" data-panel="cargar">
+    <div class="field-block">
+      <div class="section-label">Cargar gasto</div>
+      <button type="button" class="mic-btn" id="btnMicGasto">🎤 Dictar</button>
+      <div class="cat-grid" id="catGrid"></div>
+      <div class="row">
+        <input type="number" id="inpMonto" class="amount-input" placeholder="$ Monto" inputmode="decimal">
+        <input type="date" id="inpFecha">
+      </div>
+      <div class="row">
+        <input type="text" id="inpDesc" placeholder="Descripción (opcional)">
+      </div>
+      <button class="btn" id="btnAdd">Agregar gasto</button>
+    </div>
+
+    <div class="field-block" style="margin-top:40px;">
+      <div class="section-label">Cargar ingreso</div>
+      <button type="button" class="mic-btn" id="btnMicIngreso">🎤 Dictar</button>
+      <div class="row">
+        <input type="text" id="inpIngFuente" placeholder="Fuente (ej. Sueldo)">
+        <input type="number" id="inpIngMonto" placeholder="$ Monto" inputmode="decimal">
+      </div>
+      <div class="row">
+        <input type="month" id="inpIngMes">
+      </div>
+      <button class="btn" id="btnAddIngreso">Agregar ingreso</button>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="panel" data-panel="historial">
+    <div class="field-block">
+      <div class="section-label">Gastos del mes</div>
+      <div class="list-scroll" id="expList"></div>
+      <button class="link-btn danger-link" id="btnClearMonth">Vaciar gastos de este mes</button>
+    </div>
+    <div class="field-block">
+      <div class="section-label">Ingresos del mes</div>
+      <div class="list-scroll" id="ingList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalSettings">
+  <div class="modal">
+    <h3>Ajustes</h3>
+    <div class="f">
+      <label>Ingreso mensual fijo (ARS)</label>
+      <input type="number" id="setIngreso">
+    </div>
+    <div class="f">
+      <label>Categorías y presupuesto mensual (opcional)</label>
+      <div id="catSettingsList"></div>
+      <div class="row cat-add-row">
+        <input type="text" id="newCatName" placeholder="Nueva categoría">
+        <input type="color" id="newCatColor" value="#6B7280">
+        <button class="link-btn" id="btnAddCat">+ Agregar</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="link-btn" id="btnCloseSettings">Cancelar</button>
+      <button class="btn" style="width:auto;" id="btnSaveSettings">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "categoria": "Otros", "monto": 1427.78, "medio": "Débito", "desc": "IVA RG 4240"}, {"id": 1782777600006, "fecha": "2026-06-30", "categoria": "Otros", "monto": 135.98, "medio": "Débito", "desc": "IIBB SERV DIGITALES"}, {"id": 1782777600007, "fecha": "2026-06-30", "categoria": "Otros", "monto": 12000.0, "medio": "Débito", "desc": "CU  20447881536"}, {"id": 1782777600008, "fecha": "2026-06-30", "categoria": "Transporte", "monto": 4013.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1782777600009, "fecha": "2026-06-30", "categoria": "Otros", "monto": 306.67, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1782777600010, "fecha": "2026-06-30", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1782691200011, "fecha": "2026-06-29", "categoria": "Otros", "monto": 484000.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1782691200012, "fecha": "2026-06-29", "categoria": "Compras", "monto": 28000.0, "medio": "Débito", "desc": "Isabel Finn"}, {"id": 1782691200013, "fecha": "2026-06-29", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Juan Ignacio Garcia Cuerva"}, {"id": 1782691200014, "fecha": "2026-06-29", "categoria": "Compras", "monto": 9600.0, "medio": "Débito", "desc": "Facundo Lamborizio"}, {"id": 1782691200015, "fecha": "2026-06-29", "categoria": "Otros", "monto": 8862.0, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1782691200016, "fecha": "2026-06-29", "categoria": "Otros", "monto": 30000.0, "medio": "Débito", "desc": "OPENAI *CHATGPT SUBSCR"}, {"id": 1782691200017, "fecha": "2026-06-29", "categoria": "Otros", "monto": 2064.84, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1782691200018, "fecha": "2026-06-29", "categoria": "Otros", "monto": 6799.0, "medio": "Débito", "desc": "GOOGLE *YOUTUBEPREMIUM"}, {"id": 1782345600019, "fecha": "2026-06-25", "categoria": "Otros", "monto": 23500.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1782345600020, "fecha": "2026-06-25", "categoria": "Otros", "monto": 2800.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1782259200021, "fecha": "2026-06-24", "categoria": "Compras", "monto": 22500.0, "medio": "Débito", "desc": "Bautista Andres Clemente Penonori"}, {"id": 1782259200022, "fecha": "2026-06-24", "categoria": "Comida", "monto": 600.0, "medio": "Débito", "desc": "PedidosYa*Propina"}, {"id": 1782259200023, "fecha": "2026-06-24", "categoria": "Comida", "monto": 14097.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1782172800024, "fecha": "2026-06-23", "categoria": "Otros", "monto": 258000.0, "medio": "Débito", "desc": "BAUTISTA SERRANO"}, {"id": 1782172800025, "fecha": "2026-06-23", "categoria": "Otros", "monto": 1230.0, "medio": "Débito", "desc": "CU  27321727781"}, {"id": 1782172800026, "fecha": "2026-06-23", "categoria": "Transporte", "monto": 4690.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1782086400027, "fecha": "2026-06-22", "categoria": "Compras", "monto": 6500.0, "medio": "Débito", "desc": "Bautista Serrano"}, {"id": 1782086400028, "fecha": "2026-06-22", "categoria": "Otros", "monto": 120000.0, "medio": "Débito", "desc": "CU  20145354626"}, {"id": 1782086400029, "fecha": "2026-06-22", "categoria": "Comida", "monto": 5700.0, "medio": "Débito", "desc": "MERPAGO*KIOSCO365"}, {"id": 1782086400030, "fecha": "2026-06-22", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Valentin Diaz Molina"}, {"id": 1782086400031, "fecha": "2026-06-22", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Facundo Lamborizio"}, {"id": 1782086400032, "fecha": "2026-06-22", "categoria": "Compras", "monto": 4000.0, "medio": "Débito", "desc": "Maria Florencia Seveso"}, {"id": 1782086400033, "fecha": "2026-06-22", "categoria": "Otros", "monto": 10500.0, "medio": "Débito", "desc": "CU  30681490775"}, {"id": 1782086400034, "fecha": "2026-06-22", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Tomas Ezequiel Alvarez"}, {"id": 1781827200035, "fecha": "2026-06-19", "categoria": "Transporte", "monto": 14170.0, "medio": "Débito", "desc": "ESTACIONAMIENTO LAFINUR"}, {"id": 1781827200036, "fecha": "2026-06-19", "categoria": "Transporte", "monto": 15334.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1781827200037, "fecha": "2026-06-19", "categoria": "Otros", "monto": 304.71, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1781827200038, "fecha": "2026-06-19", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1781827200039, "fecha": "2026-06-19", "categoria": "Compras", "monto": 9900.0, "medio": "Débito", "desc": "Brian Koscar Jurio"}, {"id": 1781740800040, "fecha": "2026-06-18", "categoria": "Otros", "monto": 20900.0, "medio": "Débito", "desc": "MERPAGO*HINDUCLUBSHOP"}, {"id": 1781654400041, "fecha": "2026-06-17", "categoria": "Compras", "monto": 7900.0, "medio": "Débito", "desc": "Nicolas Sergio Fernandez"}, {"id": 1781654400042, "fecha": "2026-06-17", "categoria": "Comida", "monto": 600.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1781568000043, "fecha": "2026-06-16", "categoria": "Comida", "monto": 11688.0, "medio": "Débito", "desc": "PEDIDOSYA*DON ANTONIO P"}, {"id": 1781568000044, "fecha": "2026-06-16", "categoria": "Otros", "monto": 8568.0, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1781568000045, "fecha": "2026-06-16", "categoria": "Otros", "monto": 29000.0, "medio": "Débito", "desc": "ANTHROPIC* CLAUDE SUB"}, {"id": 1781568000046, "fecha": "2026-06-16", "categoria": "Compras", "monto": 16000.0, "medio": "Débito", "desc": "Anahi Nerea Fernandez"}, {"id": 1781568000047, "fecha": "2026-06-16", "categoria": "Otros", "monto": 5400.0, "medio": "Débito", "desc": "MERPAGO*CASADIEGO"}, {"id": 1781568000048, "fecha": "2026-06-16", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "EL TOKIO VIEJO SRL"}, {"id": 1781568000049, "fecha": "2026-06-16", "categoria": "Compras", "monto": 11000.0, "medio": "Débito", "desc": "Maria Jose Lopez Tamier"}, {"id": 1781568000050, "fecha": "2026-06-16", "categoria": "Compras", "monto": 4300.0, "medio": "Débito", "desc": "Cooperativa Agropecuaria De San Antonio "}, {"id": 1781568000051, "fecha": "2026-06-16", "categoria": "Compras", "monto": 7400.0, "medio": "Débito", "desc": "Grisel Ramirez"}, {"id": 1781222400052, "fecha": "2026-06-12", "categoria": "Otros", "monto": 143110.0, "medio": "Débito", "desc": "BARRA CHALACA BULNES"}, {"id": 1781222400053, "fecha": "2026-06-12", "categoria": "Otros", "monto": 10000.0, "medio": "Débito", "desc": "PROCESSING D"}, {"id": 1781222400054, "fecha": "2026-06-12", "categoria": "Otros", "monto": 10000.0, "medio": "Débito", "desc": "PROCESSING D"}, {"id": 1781136000055, "fecha": "2026-06-11", "categoria": "Otros", "monto": 8500.0, "medio": "Débito", "desc": "HELADERIA ESQUEL DON T"}, {"id": 1781136000056, "fecha": "2026-06-11", "categoria": "Otros", "monto": 17000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1781136000057, "fecha": "2026-06-11", "categoria": "Otros", "monto": 610.13, "medio": "Débito", "desc": "IVA RG 4240"}, {"id": 1781136000058, "fecha": "2026-06-11", "categoria": "Otros", "monto": 58.11, "medio": "Débito", "desc": "IIBB SERV DIGITALES"}, {"id": 1781136000059, "fecha": "2026-06-11", "categoria": "Compras", "monto": 8600.0, "medio": "Débito", "desc": "Facundo Lamborizio"}, {"id": 1781049600060, "fecha": "2026-06-10", "categoria": "Compras", "monto": 15000.0, "medio": "Débito", "desc": "Bautista Andres Clemente Penonori"}, {"id": 1781049600061, "fecha": "2026-06-10", "categoria": "Otros", "monto": 112292.45, "medio": "Débito", "desc": "MERPAGO*CFHECDAGB7131"}, {"id": 1781049600062, "fecha": "2026-06-10", "categoria": "Otros", "monto": 860.27, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1781049600063, "fecha": "2026-06-10", "categoria": "Otros", "monto": 2905.4, "medio": "Débito", "desc": "APPLE.COM/BILL"}, {"id": 1780876800064, "fecha": "2026-06-08", "categoria": "Otros", "monto": 11000.0, "medio": "Débito", "desc": "CU  20167637745"}, {"id": 1780876800065, "fecha": "2026-06-08", "categoria": "Otros", "monto": 100000.0, "medio": "Débito", "desc": "DE LA VEGA DOLORES MAGDALENA"}, {"id": 1780876800066, "fecha": "2026-06-08", "categoria": "Compras", "monto": 3600.0, "medio": "Débito", "desc": "Francisco Perez Grote"}, {"id": 1780876800067, "fecha": "2026-06-08", "categoria": "Transporte", "monto": 30000.0, "medio": "Débito", "desc": "YPF AUTOP LA PLATA BS."}, {"id": 1780876800068, "fecha": "2026-06-08", "categoria": "Otros", "monto": 4000.0, "medio": "Débito", "desc": "MERPAGO*VILAFAMESGAST"}, {"id": 1780617600069, "fecha": "2026-06-05", "categoria": "Transporte", "monto": 15100.0, "medio": "Débito", "desc": "AXION AUBASA BA-LP"}, {"id": 1780617600070, "fecha": "2026-06-05", "categoria": "Compras", "monto": 36000.0, "medio": "Débito", "desc": "Ciro Valencio Battilana"}, {"id": 1780617600071, "fecha": "2026-06-05", "categoria": "Otros", "monto": 28000.0, "medio": "Débito", "desc": "THE CLEAN CAR"}, {"id": 1780617600072, "fecha": "2026-06-05", "categoria": "Otros", "monto": 13700.0, "medio": "Débito", "desc": "FLORIPO SA"}, {"id": 1780531200073, "fecha": "2026-06-04", "categoria": "Otros", "monto": 17000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1780444800074, "fecha": "2026-06-03", "categoria": "Compras", "monto": 7800.0, "medio": "Débito", "desc": "Yorfran Sergio Villanueva Medina"}, {"id": 1780444800075, "fecha": "2026-06-03", "categoria": "Otros", "monto": 9000.0, "medio": "Débito", "desc": "ROBERTAL S.A"}, {"id": 1780358400076, "fecha": "2026-06-02", "categoria": "Otros", "monto": 365000.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1780358400077, "fecha": "2026-06-02", "categoria": "Otros", "monto": 17500.0, "medio": "Débito", "desc": "FERRANDO MENDOZA NAZARENO BENJAMIN"}, {"id": 1780272000078, "fecha": "2026-06-01", "categoria": "Compras", "monto": 32000.0, "medio": "Débito", "desc": "Pablo Jose Fernandez"}, {"id": 1780272000079, "fecha": "2026-06-01", "categoria": "Otros", "monto": 304.12, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1780272000080, "fecha": "2026-06-01", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1780272000081, "fecha": "2026-06-01", "categoria": "Otros", "monto": 7500.0, "medio": "Débito", "desc": "CU  30681490775"}, {"id": 1780272000082, "fecha": "2026-06-01", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Facundo Lamborizio"}, {"id": 1780272000083, "fecha": "2026-06-01", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Ciro Valencio Battilana"}, {"id": 1780012800084, "fecha": "2026-05-29", "categoria": "Compras", "monto": 27000.0, "medio": "Débito", "desc": "Mauricio Leonardo Bustos"}, {"id": 1779926400085, "fecha": "2026-05-28", "categoria": "Otros", "monto": 18000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1779926400086, "fecha": "2026-05-28", "categoria": "Otros", "monto": 1427.78, "medio": "Débito", "desc": "IVA RG 4240"}, {"id": 1779926400087, "fecha": "2026-05-28", "categoria": "Otros", "monto": 135.98, "medio": "Débito", "desc": "IIBB SERV DIGITALES"}, {"id": 1779840000088, "fecha": "2026-05-27", "categoria": "Compras", "monto": 28000.0, "medio": "Débito", "desc": "Pablo Jose Fernandez"}, {"id": 1779840000089, "fecha": "2026-05-27", "categoria": "Otros", "monto": 2065.7, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1779840000090, "fecha": "2026-05-27", "categoria": "Otros", "monto": 6799.0, "medio": "Débito", "desc": "GOOGLE *YOUTUBEPREMIUM"}, {"id": 1779753600091, "fecha": "2026-05-26", "categoria": "Compras", "monto": 34600.0, "medio": "Débito", "desc": "Juan Ignacio Garcia Cuerva"}, {"id": 1779753600092, "fecha": "2026-05-26", "categoria": "Otros", "monto": 20000.0, "medio": "Débito", "desc": "CU  20444827336"}, {"id": 1779753600093, "fecha": "2026-05-26", "categoria": "Otros", "monto": 20000.0, "medio": "Débito", "desc": "MORELLI AGUSTIN LUCIANO"}, {"id": 1779753600094, "fecha": "2026-05-26", "categoria": "Otros", "monto": 8000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1779753600095, "fecha": "2026-05-26", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Fermin Igarreta"}, {"id": 1779408000096, "fecha": "2026-05-22", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Ciro Valencio Battilana"}, {"id": 1779408000097, "fecha": "2026-05-22", "categoria": "Otros", "monto": 42800.0, "medio": "Débito", "desc": "GELAY PASTAS ARTESANAL"}, {"id": 1779321600098, "fecha": "2026-05-21", "categoria": "Otros", "monto": 16000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1779321600099, "fecha": "2026-05-21", "categoria": "Otros", "monto": 2500.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1779235200100, "fecha": "2026-05-20", "categoria": "Otros", "monto": 95600.0, "medio": "Débito", "desc": "DE LA VEGA DOLORES MAGDALENA"}, {"id": 1779235200101, "fecha": "2026-05-20", "categoria": "Transporte", "monto": 12193.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1779148800102, "fecha": "2026-05-19", "categoria": "Transporte", "monto": 3861.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1779148800103, "fecha": "2026-05-19", "categoria": "Otros", "monto": 305.94, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1779148800104, "fecha": "2026-05-19", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1779062400105, "fecha": "2026-05-18", "categoria": "Otros", "monto": 75000.0, "medio": "Débito", "desc": "CU  20190827136"}, {"id": 1779062400106, "fecha": "2026-05-18", "categoria": "Compras", "monto": 13600.0, "medio": "Débito", "desc": "DE CORCHOS Y BARRICAS S.A.S."}, {"id": 1779062400107, "fecha": "2026-05-18", "categoria": "Otros", "monto": 20000.0, "medio": "Débito", "desc": "MERPAGO*EMPCOSTANERA"}, {"id": 1779062400108, "fecha": "2026-05-18", "categoria": "Compras", "monto": 24300.0, "medio": "Débito", "desc": "Javier Nehemias Catriel Cruz"}, {"id": 1779062400109, "fecha": "2026-05-18", "categoria": "Otros", "monto": 16999.0, "medio": "Débito", "desc": "MC DONALDS R02"}, {"id": 1779062400110, "fecha": "2026-05-18", "categoria": "Otros", "monto": 15000.0, "medio": "Débito", "desc": "CU  20443817302"}, {"id": 1779062400111, "fecha": "2026-05-18", "categoria": "Otros", "monto": 10200.0, "medio": "Débito", "desc": "PVS*MINI MARKET LUCY"}, {"id": 1779062400112, "fecha": "2026-05-18", "categoria": "Compras", "monto": 18500.0, "medio": "Débito", "desc": "Karina Alejandra Ocsadlik"}, {"id": 1779062400113, "fecha": "2026-05-18", "categoria": "Compras", "monto": 5000.0, "medio": "Débito", "desc": "Carlos Manuel Rivolta"}, {"id": 1779062400114, "fecha": "2026-05-18", "categoria": "Otros", "monto": 10000.0, "medio": "Débito", "desc": "CU  23446423819"}, {"id": 1778803200115, "fecha": "2026-05-15", "categoria": "Comida", "monto": 3819.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1778803200116, "fecha": "2026-05-15", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1778803200117, "fecha": "2026-05-15", "categoria": "Comida", "monto": 20723.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1778716800118, "fecha": "2026-05-14", "categoria": "Otros", "monto": 17000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1778716800119, "fecha": "2026-05-14", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Joaquin Pinto Sujeros"}, {"id": 1778630400120, "fecha": "2026-05-13", "categoria": "Otros", "monto": 3300.0, "medio": "Débito", "desc": "MERPAGO*ROMY"}, {"id": 1778544000121, "fecha": "2026-05-12", "categoria": "Otros", "monto": 591.32, "medio": "Débito", "desc": "IVA RG 4240"}, {"id": 1778544000122, "fecha": "2026-05-12", "categoria": "Otros", "monto": 56.32, "medio": "Débito", "desc": "IIBB SERV DIGITALES"}, {"id": 1778544000123, "fecha": "2026-05-12", "categoria": "Otros", "monto": 2500.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1778544000124, "fecha": "2026-05-12", "categoria": "Otros", "monto": 13750.0, "medio": "Débito", "desc": "CU  20442989592"}, {"id": 1778544000125, "fecha": "2026-05-12", "categoria": "Compras", "monto": 7500.0, "medio": "Débito", "desc": "Guido Grondona"}, {"id": 1778544000126, "fecha": "2026-05-12", "categoria": "Transporte", "monto": 3396.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1778544000127, "fecha": "2026-05-12", "categoria": "Otros", "monto": 300.56, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1778544000128, "fecha": "2026-05-12", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1778457600129, "fecha": "2026-05-11", "categoria": "Otros", "monto": 15000.0, "medio": "Débito", "desc": "CU  20444827336"}, {"id": 1778457600130, "fecha": "2026-05-11", "categoria": "Otros", "monto": 32400.0, "medio": "Débito", "desc": "TICKETING TORNEO LOCAL CA"}, {"id": 1778457600131, "fecha": "2026-05-11", "categoria": "Otros", "monto": 22800.0, "medio": "Débito", "desc": "CU  27959090004"}, {"id": 1778457600132, "fecha": "2026-05-11", "categoria": "Comida", "monto": 9400.0, "medio": "Débito", "desc": "PVS*SUPERMERCADO MANUELA"}, {"id": 1778457600133, "fecha": "2026-05-11", "categoria": "Compras", "monto": 12500.0, "medio": "Débito", "desc": "Isabel Finn"}, {"id": 1778457600134, "fecha": "2026-05-11", "categoria": "Otros", "monto": 834.6, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1778457600135, "fecha": "2026-05-11", "categoria": "Otros", "monto": 2815.85, "medio": "Débito", "desc": "APPLE.COM BILL"}, {"id": 1778457600136, "fecha": "2026-05-11", "categoria": "Otros", "monto": 34500.0, "medio": "Débito", "desc": "MERPAGO*FLASHPASS"}, {"id": 1778457600137, "fecha": "2026-05-11", "categoria": "Otros", "monto": 12000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1778457600138, "fecha": "2026-05-11", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Agustin Silva"}, {"id": 1778457600139, "fecha": "2026-05-11", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Ciro Valencio Battilana"}, {"id": 1778112000140, "fecha": "2026-05-07", "categoria": "Otros", "monto": 16000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1778112000141, "fecha": "2026-05-07", "categoria": "Compras", "monto": 24000.0, "medio": "Débito", "desc": "SERYDOR SRL"}, {"id": 1778112000142, "fecha": "2026-05-07", "categoria": "Otros", "monto": 6500.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1778112000143, "fecha": "2026-05-07", "categoria": "Otros", "monto": 160000.0, "medio": "Débito", "desc": "IGARRETA FELIPE"}, {"id": 1778025600144, "fecha": "2026-05-06", "categoria": "Transporte", "monto": 3223.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1778025600145, "fecha": "2026-05-06", "categoria": "Otros", "monto": 305.06, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1778025600146, "fecha": "2026-05-06", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1777852800147, "fecha": "2026-05-04", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777852800148, "fecha": "2026-05-04", "categoria": "Comida", "monto": 22229.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777852800149, "fecha": "2026-05-04", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777852800150, "fecha": "2026-05-04", "categoria": "Comida", "monto": 22229.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777852800151, "fecha": "2026-05-04", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777852800152, "fecha": "2026-05-04", "categoria": "Comida", "monto": 22229.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777852800153, "fecha": "2026-05-04", "categoria": "Otros", "monto": 2200.0, "medio": "Débito", "desc": "MERPAGO*SUPERMK"}, {"id": 1777852800154, "fecha": "2026-05-04", "categoria": "Compras", "monto": 14000.0, "medio": "Débito", "desc": "Anahi Nerea Fernandez"}, {"id": 1777852800155, "fecha": "2026-05-04", "categoria": "Otros", "monto": 17500.0, "medio": "Débito", "desc": "CU  20444827336"}, {"id": 1777852800156, "fecha": "2026-05-04", "categoria": "Otros", "monto": 25500.0, "medio": "Débito", "desc": "CU  20444827336"}, {"id": 1777852800157, "fecha": "2026-05-04", "categoria": "Otros", "monto": 5450.0, "medio": "Débito", "desc": "Market San Isidro (LaFlor"}, {"id": 1777852800158, "fecha": "2026-05-04", "categoria": "Comida", "monto": 600.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777852800159, "fecha": "2026-05-04", "categoria": "Comida", "monto": 600.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777852800160, "fecha": "2026-05-04", "categoria": "Comida", "monto": 14659.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777852800161, "fecha": "2026-05-04", "categoria": "Comida", "monto": 13759.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777852800162, "fecha": "2026-05-04", "categoria": "Otros", "monto": 21150.0, "medio": "Débito", "desc": "AUTOSERVICIO FRANCO"}, {"id": 1777852800163, "fecha": "2026-05-04", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777852800164, "fecha": "2026-05-04", "categoria": "Comida", "monto": 23819.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777507200165, "fecha": "2026-04-30", "categoria": "Otros", "monto": 18500.0, "medio": "Débito", "desc": "ASOC. CIVIL"}, {"id": 1777507200166, "fecha": "2026-04-30", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1777507200167, "fecha": "2026-04-30", "categoria": "Compras", "monto": 50000.0, "medio": "Débito", "desc": "Facundo Lamborizio"}, {"id": 1777507200168, "fecha": "2026-04-30", "categoria": "Comida", "monto": 23229.0, "medio": "Débito", "desc": "PEDIDOSYA*MARKET"}, {"id": 1777507200169, "fecha": "2026-04-30", "categoria": "Otros", "monto": 195679.0, "medio": "Débito", "desc": "EL MATACO SRL"}, {"id": 1777507200170, "fecha": "2026-04-30", "categoria": "Otros", "monto": 1728800.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1777507200171, "fecha": "2026-04-30", "categoria": "Otros", "monto": 385500.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1777420800172, "fecha": "2026-04-29", "categoria": "Transporte", "monto": 12511.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1777420800173, "fecha": "2026-04-29", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Geronimo Galluzzo"}, {"id": 1777420800174, "fecha": "2026-04-29", "categoria": "Compras", "monto": 30700.0, "medio": "Débito", "desc": "MARTIN RODRIGO CABADO"}, {"id": 1777420800175, "fecha": "2026-04-29", "categoria": "Otros", "monto": 300000.0, "medio": "Débito", "desc": "CU  27951184166"}, {"id": 1777420800176, "fecha": "2026-04-29", "categoria": "Transporte", "monto": 2990.0, "medio": "Débito", "desc": "PAYU*AR*UBER"}, {"id": 1777420800177, "fecha": "2026-04-29", "categoria": "Otros", "monto": 303.37, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1777420800178, "fecha": "2026-04-29", "categoria": "Transporte", "monto": 1000.0, "medio": "Débito", "desc": "UBER SHOPPER STATEMENT"}, {"id": 1777334400179, "fecha": "2026-04-28", "categoria": "Otros", "monto": 1427.78, "medio": "Débito", "desc": "IVA RG 4240"}, {"id": 1777334400180, "fecha": "2026-04-28", "categoria": "Otros", "monto": 135.98, "medio": "Débito", "desc": "IIBB SERV DIGITALES"}, {"id": 1777334400181, "fecha": "2026-04-28", "categoria": "Compras", "monto": 35000.0, "medio": "Débito", "desc": "Ignacio Ramiro Brarda"}, {"id": 1777248000182, "fecha": "2026-04-27", "categoria": "Compras", "monto": 8800.0, "medio": "Débito", "desc": "Bautista Serrano"}, {"id": 1777248000183, "fecha": "2026-04-27", "categoria": "Compras", "monto": 13500.0, "medio": "Débito", "desc": "Bautista Andres Clemente Penonori"}, {"id": 1777248000184, "fecha": "2026-04-27", "categoria": "Otros", "monto": 8502.0, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1777248000185, "fecha": "2026-04-27", "categoria": "Otros", "monto": 28800.0, "medio": "Débito", "desc": "OPENAI *CHATGPT SUBSCR"}, {"id": 1777248000186, "fecha": "2026-04-27", "categoria": "Otros", "monto": 2065.66, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1777248000187, "fecha": "2026-04-27", "categoria": "Otros", "monto": 6799.0, "medio": "Débito", "desc": "GOOGLE *YOUTUBEPREMIUM"}, {"id": 1777248000188, "fecha": "2026-04-27", "categoria": "Compras", "monto": 30000.0, "medio": "Débito", "desc": "Isabel Finn"}, {"id": 1777248000189, "fecha": "2026-04-27", "categoria": "Otros", "monto": 100000.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1777248000190, "fecha": "2026-04-27", "categoria": "Compras", "monto": 1000.0, "medio": "Débito", "desc": "Violeta Guimarey"}, {"id": 1777248000191, "fecha": "2026-04-27", "categoria": "Compras", "monto": 13500.0, "medio": "Débito", "desc": "Sol Chapur"}, {"id": 1777248000192, "fecha": "2026-04-27", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Agustin Luciano Morelli"}, {"id": 1776988800193, "fecha": "2026-04-24", "categoria": "Comida", "monto": 600.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1776988800194, "fecha": "2026-04-24", "categoria": "Comida", "monto": 10069.0, "medio": "Débito", "desc": "PEDIDOSYA*HELADERIA COL"}, {"id": 1776902400195, "fecha": "2026-04-23", "categoria": "Otros", "monto": 14000.0, "medio": "Débito", "desc": "ASOC. CIVIL"}, {"id": 1776729600196, "fecha": "2026-04-21", "categoria": "Otros", "monto": 45238.14, "medio": "Débito", "desc": "MERPAGO*ELECTRONICAFL"}, {"id": 1776643200197, "fecha": "2026-04-20", "categoria": "Otros", "monto": 5000.0, "medio": "Débito", "desc": "MERPAGO*BENJAMINGONZA"}, {"id": 1776643200198, "fecha": "2026-04-20", "categoria": "Comida", "monto": 48400.0, "medio": "Débito", "desc": "PARRILLA EL TATA"}, {"id": 1776643200199, "fecha": "2026-04-20", "categoria": "Otros", "monto": 3779.74, "medio": "Débito", "desc": "CUOTA SOCIAL - CARP"}, {"id": 1776643200200, "fecha": "2026-04-20", "categoria": "Otros", "monto": 3800.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1776643200201, "fecha": "2026-04-20", "categoria": "Otros", "monto": 5500.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1776643200202, "fecha": "2026-04-20", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Tomas Mateucci"}, {"id": 1776643200203, "fecha": "2026-04-20", "categoria": "Otros", "monto": 3000.0, "medio": "Débito", "desc": "MERPAGO*TOMASCOEGOALO"}, {"id": 1776643200204, "fecha": "2026-04-20", "categoria": "Otros", "monto": 7000.0, "medio": "Débito", "desc": "NO  27958668355"}, {"id": 1776643200205, "fecha": "2026-04-20", "categoria": "Otros", "monto": 44400.0, "medio": "Débito", "desc": "LA FAROLA DE NUNEZ"}, {"id": 1776643200206, "fecha": "2026-04-20", "categoria": "Otros", "monto": 10100.0, "medio": "Débito", "desc": "MERPAGO*TOMASCOEGOALO"}, {"id": 1776643200207, "fecha": "2026-04-20", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Tomas Mateucci"}, {"id": 1776643200208, "fecha": "2026-04-20", "categoria": "Compras", "monto": 25000.0, "medio": "Débito", "desc": "Geronimo Galluzzo"}, {"id": 1776643200209, "fecha": "2026-04-20", "categoria": "Otros", "monto": 15000.0, "medio": "Débito", "desc": "ASOC. CIVIL"}, {"id": 1776643200210, "fecha": "2026-04-20", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Tomas Mateucci"}, {"id": 1776384000211, "fecha": "2026-04-17", "categoria": "Compras", "monto": 103600.0, "medio": "Débito", "desc": "Lautaro Arnoldi"}, {"id": 1776297600212, "fecha": "2026-04-16", "categoria": "Otros", "monto": 14000.0, "medio": "Débito", "desc": "ASOC. CIVIL"}, {"id": 1776211200213, "fecha": "2026-04-15", "categoria": "Transporte", "monto": 12595.0, "medio": "Débito", "desc": "Cabify2616NrLFDpG4"}, {"id": 1776124800214, "fecha": "2026-04-14", "categoria": "Otros", "monto": 7904.0, "medio": "Débito", "desc": "UNIVERSIDAD DE BUENOS AI"}, {"id": 1776124800215, "fecha": "2026-04-14", "categoria": "Otros", "monto": 36700.0, "medio": "Débito", "desc": "CU  20444827336"}, {"id": 1776038400216, "fecha": "2026-04-13", "categoria": "Otros", "monto": 589.23, "medio": "Débito", "desc": "IVA RG 4240"}, {"id": 1776038400217, "fecha": "2026-04-13", "categoria": "Otros", "monto": 56.12, "medio": "Débito", "desc": "IIBB SERV DIGITALES"}, {"id": 1776038400218, "fecha": "2026-04-13", "categoria": "Otros", "monto": 15517.0, "medio": "Débito", "desc": "UEN SA"}, {"id": 1776038400219, "fecha": "2026-04-13", "categoria": "Comida", "monto": 700.0, "medio": "Débito", "desc": "PEDIDOSYA*PROPINA"}, {"id": 1776038400220, "fecha": "2026-04-13", "categoria": "Comida", "monto": 18059.0, "medio": "Débito", "desc": "PEDIDOSYA*365 KIOSCO LI"}, {"id": 1776038400221, "fecha": "2026-04-13", "categoria": "Compras", "monto": 7500.0, "medio": "Débito", "desc": "Marcos Novella Frey"}, {"id": 1776038400222, "fecha": "2026-04-13", "categoria": "Compras", "monto": 3000.0, "medio": "Débito", "desc": "Alicia Rosana Romaniello"}, {"id": 1776038400223, "fecha": "2026-04-13", "categoria": "Otros", "monto": 19000.0, "medio": "Débito", "desc": "MERPAGO*MASAMADRE"}, {"id": 1776038400224, "fecha": "2026-04-13", "categoria": "Compras", "monto": 10000.0, "medio": "Débito", "desc": "Lautaro Leguizamon Klein"}, {"id": 1775779200225, "fecha": "2026-04-10", "categoria": "Otros", "monto": 126720.0, "medio": "Débito", "desc": "CUOTA SOCIAL - CARP"}, {"id": 1775779200226, "fecha": "2026-04-10", "categoria": "Compras", "monto": 20000.0, "medio": "Débito", "desc": "Antonio Alberto Suarez"}, {"id": 1775779200227, "fecha": "2026-04-10", "categoria": "Otros", "monto": 838.78, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1775779200228, "fecha": "2026-04-10", "categoria": "Otros", "monto": 2805.9, "medio": "Débito", "desc": "APPLE.COM/BILL"}, {"id": 1775692800229, "fecha": "2026-04-09", "categoria": "Otros", "monto": 16000.0, "medio": "Débito", "desc": "ASOCIACION CIVIL HINDU RU"}, {"id": 1775692800230, "fecha": "2026-04-09", "categoria": "Compras", "monto": 15900.0, "medio": "Débito", "desc": "Joaquin Cafferata"}, {"id": 1775606400231, "fecha": "2026-04-08", "categoria": "Otros", "monto": 10400.0, "medio": "Débito", "desc": "Toyota Aramark"}, {"id": 1775520000232, "fecha": "2026-04-07", "categoria": "Otros", "monto": 212130.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1775520000233, "fecha": "2026-04-07", "categoria": "Otros", "monto": 216000.0, "medio": "Débito", "desc": "DIAZ SOTO GONZALO FEDERIC"}, {"id": 1775433600234, "fecha": "2026-04-06", "categoria": "Otros", "monto": 21300.0, "medio": "Débito", "desc": "GIACOBBE RIVERO JOSE GREGORIO"}, {"id": 1775001600235, "fecha": "2026-04-01", "categoria": "Otros", "monto": 8292.0, "medio": "Débito", "desc": "PERCEPCION RG 5617/24"}, {"id": 1775001600236, "fecha": "2026-04-01", "categoria": "Otros", "monto": 28200.0, "medio": "Débito", "desc": "OPENAI *CHATGPT SUBSCR"}], "ingresosOverride": {"2026-06": 4939202.8, "2026-05": 3404611.94, "2026-04": 5545406.5}, "ingresoMensual": 4939202.8};
+
+(function () {
+
+  const STORAGE_KEY = "finanzasGastosMateo_v1";
+  const DEFAULT_CATS = [
+    { id: "Comida", color: "#F97316" },
+    { id: "Transporte", color: "#3B82F6" },
+    { id: "Vivienda", color: "#8B5CF6" },
+    { id: "Servicios", color: "#06B6D4" },
+    { id: "Entretenimiento", color: "#EC4899" },
+    { id: "Salud", color: "#EF4444" },
+    { id: "Compras", color: "#10B981" },
+    { id: "Otros", color: "#6B7280" },
+  ];
+  function defaultData() {
+    return {
+      gastos: SEED_DATA.gastos.slice(),
+      ingresos: Object.keys(SEED_DATA.ingresosOverride || {}).map((mk, i) => ({
+        id: 900000000000 + i, mes: mk, fuente: "Ingresos (extracto bancario)", monto: SEED_DATA.ingresosOverride[mk]
+      })),
+      ingresoMensual: SEED_DATA.ingresoMensual,
+      categorias: DEFAULT_CATS.map(c => ({ ...c })),
+      presupuestos: {}
+    };
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultData();
+      return Object.assign(defaultData(), JSON.parse(raw));
+    } catch (e) { return defaultData(); }
+  }
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      alert("No se pudo guardar: el navegador bloqueó el almacenamiento local (por ejemplo, modo privado). Los cambios de esta sesión pueden perderse al cerrar.");
+    }
+  }
+
+  let state = load();
+  let selectedCat = null;
+
+  const fmtARS = n => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n || 0);
+  const monthKey = d => d.slice(0, 7);
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const catColor = id => (state.categorias.find(c => c.id === id) || {}).color || "#6B7280";
+
+  function last12Months() {
+    const arr = []; const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      arr.push(d.toISOString().slice(0, 7));
+    }
+    return arr;
+  }
+  const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  function monthLabel(mk) { const [y,m] = mk.split("-"); return MESES[parseInt(m,10)-1] + " " + y; }
+  function monthLabelShort(mk) { const [y,m] = mk.split("-"); return MESES[parseInt(m,10)-1].slice(0,3) + " " + y.slice(2); }
+
+  function gastosDelMes(mk) { return state.gastos.filter(g => monthKey(g.fecha) === mk); }
+  function totalGastos(mk) { return gastosDelMes(mk).reduce((s,g) => s + g.monto, 0); }
+  function ingresosDelMes(mk) { return state.ingresos.filter(g => g.mes === mk); }
+  function ingresoDelMes(mk) {
+    const items = ingresosDelMes(mk);
+    return items.length ? items.reduce((s,g)=>s+g.monto,0) : state.ingresoMensual;
+  }
+
+  let chartAhorroInstance = null;
+
+  function render() {
+    const months = last12Months();
+    const sel = document.getElementById("monthSelect");
+    const prevVal = sel.value;
+    sel.innerHTML = months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join("");
+    sel.value = months.includes(prevVal) ? prevVal : months[months.length - 1];
+    const mk = sel.value;
+
+    const gasto = totalGastos(mk);
+    document.getElementById("heroLabel").textContent = "Gastado en " + monthLabel(mk);
+    document.getElementById("heroNumber").textContent = fmtARS(gasto);
+
+    const realMk = todayStr().slice(0, 7);
+    const heroProj = document.getElementById("heroProjection");
+    if (mk === realMk) {
+      const dayNum = new Date().getDate();
+      const daysInMonth = new Date(parseInt(mk.slice(0,4),10), parseInt(mk.slice(5,7),10), 0).getDate();
+      if (gasto > 0 && dayNum > 0) {
+        const proyeccion = (gasto / dayNum) * daysInMonth;
+        heroProj.textContent = "Proyección a fin de mes: " + fmtARS(proyeccion);
+      } else {
+        heroProj.textContent = "";
+      }
+    } else {
+      heroProj.textContent = "";
+    }
+
+    const catTotals = state.categorias.map(c => ({ ...c, total: gastosDelMes(mk).filter(g => g.categoria === c.id).reduce((s,g)=>s+g.monto,0) }))
+      .filter(c => c.total > 0).sort((a,b) => b.total - a.total);
+    const maxTotal = catTotals.length ? catTotals[0].total : 1;
+    const catList = document.getElementById("catList");
+    if (!catTotals.length) {
+      catList.innerHTML = `<div class="empty">Sin gastos cargados este mes.</div>`;
+    } else {
+      catList.innerHTML = catTotals.map(c => {
+        const presu = state.presupuestos[c.id] || 0;
+        let budgetNote = "";
+        if (presu > 0) {
+          const pct = (c.total / presu) * 100;
+          const color = pct < 70 ? "var(--green)" : pct < 100 ? "var(--yellow)" : "var(--red)";
+          budgetNote = `<div class="cat-budget-note" style="color:${color}">${pct.toFixed(0)}% de ${fmtARS(presu)}</div>`;
+        }
+        return `
+        <div class="cat-row">
+          <div class="cat-row-top"><span class="name">${c.id}</span><span>${fmtARS(c.total)}</span></div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${(c.total/maxTotal*100).toFixed(1)}%; background:${c.color};"></div></div>
+          ${budgetNote}
+        </div>
+      `;
+      }).join("");
+    }
+
+    const btnClearMonth = document.getElementById("btnClearMonth");
+    if (btnClearMonth) btnClearMonth.textContent = "Vaciar gastos de " + monthLabel(mk);
+
+    renderExpenseList(mk);
+    renderIncomeList(mk);
+    renderCatButtons();
+    renderChartAhorro();
+  }
+
+  function renderCatButtons() {
+    const grid = document.getElementById("catGrid");
+    grid.innerHTML = "";
+    state.categorias.forEach(c => {
+      const btn = document.createElement("button");
+      btn.className = "cat-btn" + (selectedCat === c.id ? " active" : "");
+      btn.innerHTML = `<span class="dot" style="background:${c.color}"></span><span>${c.id}</span>`;
+      btn.onclick = () => { selectedCat = c.id; renderCatButtons(); };
+      grid.appendChild(btn);
+    });
+  }
+  function renderExpenseList(mk) {
+    const list = document.getElementById("expList");
+    const items = gastosDelMes(mk).slice().sort((a,b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+    if (!items.length) { list.innerHTML = `<div class="empty">Nada cargado este mes.</div>`; return; }
+    list.innerHTML = items.map(g => `
+      <div class="hist-row">
+        <div class="hist-dot" style="background:${catColor(g.categoria)}"></div>
+        <div class="hist-meta"><div class="cat">${g.categoria}${g.desc ? " · " + g.desc : ""}</div><div class="desc">${g.fecha}</div></div>
+        <div class="hist-amt">${fmtARS(g.monto)}</div>
+        <div class="hist-del" data-id="${g.id}">✕</div>
+      </div>
+    `).join("");
+    list.querySelectorAll(".hist-del").forEach(el => {
+      el.onclick = () => { state.gastos = state.gastos.filter(g => g.id !== Number(el.dataset.id)); save(); render(); };
+    });
+  }
+  function renderIncomeList(mk) {
+    const list = document.getElementById("ingList");
+    const items = ingresosDelMes(mk);
+    if (!items.length) { list.innerHTML = `<div class="empty">Sin ingresos cargados (usa el fijo de Ajustes: ${fmtARS(state.ingresoMensual)}).</div>`; return; }
+    list.innerHTML = items.map(g => `
+      <div class="hist-row">
+        <div class="hist-dot" style="background:${'#2f6fed'}"></div>
+        <div class="hist-meta"><div class="cat">${g.fuente}</div><div class="desc">${g.mes}</div></div>
+        <div class="hist-amt">${fmtARS(g.monto)}</div>
+        <div class="hist-del" data-id="${g.id}">✕</div>
+      </div>
+    `).join("");
+    list.querySelectorAll(".hist-del").forEach(el => {
+      el.onclick = () => { state.ingresos = state.ingresos.filter(g => g.id !== Number(el.dataset.id)); save(); render(); };
+    });
+  }
+
+  function renderChartAhorro() {
+    const ctx = document.getElementById("chartAhorro");
+    const months = last12Months().slice(-6);
+    const data = months.map(mk => ingresoDelMes(mk) - totalGastos(mk));
+    if (chartAhorroInstance) chartAhorroInstance.destroy();
+    chartAhorroInstance = new Chart(ctx, {
+      type: "bar",
+      data: { labels: months.map(monthLabelShort), datasets: [{ data, backgroundColor: data.map(v => v >= 0 ? "#2f6fed" : "#d9534f"), borderRadius: 4, maxBarThickness: 28 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: "#f2f2f1" }, ticks: { color: "#9b9a97", font: { size: 10 }, callback: v => fmtARS(v) } },
+          x: { grid: { display: false }, ticks: { color: "#9b9a97", font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1800);
+  }
+
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelector(`.panel[data-panel="${btn.dataset.tab}"]`).classList.add("active");
+      if (btn.dataset.tab === "resumen") renderChartAhorro();
+    };
+  });
+
+  document.getElementById("inpFecha").value = todayStr();
+  document.getElementById("inpIngMes").value = todayStr().slice(0,7);
+  document.getElementById("monthSelect").addEventListener("change", render);
+
+  document.getElementById("btnAdd").onclick = () => {
+    const monto = parseFloat(document.getElementById("inpMonto").value);
+    const fecha = document.getElementById("inpFecha").value || todayStr();
+    const desc = document.getElementById("inpDesc").value.trim();
+    if (!selectedCat) { toast("Elegí una categoría"); return; }
+    if (!monto || monto <= 0) { toast("Ingresá un monto válido"); return; }
+    state.gastos.push({ id: Date.now(), fecha, categoria: selectedCat, monto, desc });
+    save();
+    document.getElementById("inpMonto").value = ""; document.getElementById("inpDesc").value = "";
+    toast("Gasto agregado"); render();
+  };
+  document.getElementById("btnAddIngreso").onclick = () => {
+    const fuente = document.getElementById("inpIngFuente").value.trim() || "Ingreso";
+    const monto = parseFloat(document.getElementById("inpIngMonto").value);
+    const mes = document.getElementById("inpIngMes").value || todayStr().slice(0,7);
+    if (!monto || monto <= 0) { toast("Ingresá un monto válido"); return; }
+    state.ingresos.push({ id: Date.now(), mes, fuente, monto });
+    save();
+    document.getElementById("inpIngMonto").value = ""; document.getElementById("inpIngFuente").value = "";
+    toast("Ingreso agregado"); render();
+  };
+
+  function renderCatSettingsList() {
+    const box = document.getElementById("catSettingsList");
+    box.innerHTML = state.categorias.map(c => `
+      <div class="cat-setting-row" data-id="${c.id}">
+        <input type="color" class="cat-color-input" value="${c.color}">
+        <span class="cat-setting-name">${c.id}</span>
+        <input type="number" class="cat-budget-input" placeholder="Tope $" value="${state.presupuestos[c.id] || ""}">
+        <span class="cat-del" data-id="${c.id}">✕</span>
+      </div>
+    `).join("");
+    box.querySelectorAll(".cat-del").forEach(el => {
+      el.onclick = () => {
+        const id = el.dataset.id;
+        const enUso = state.gastos.some(g => g.categoria === id);
+        if (enUso) { toast("No se puede eliminar: hay gastos con esta categoría"); return; }
+        state.categorias = state.categorias.filter(c => c.id !== id);
+        delete state.presupuestos[id];
+        save(); renderCatSettingsList(); render();
+      };
+    });
+  }
+
+  document.getElementById("btnSettings").onclick = () => {
+    document.getElementById("setIngreso").value = state.ingresoMensual || "";
+    renderCatSettingsList();
+    document.getElementById("modalSettings").classList.add("open");
+  };
+  document.getElementById("btnCloseSettings").onclick = () => document.getElementById("modalSettings").classList.remove("open");
+  document.getElementById("btnSaveSettings").onclick = () => {
+    state.ingresoMensual = parseFloat(document.getElementById("setIngreso").value) || 0;
+    document.querySelectorAll("#catSettingsList .cat-setting-row").forEach(row => {
+      const id = row.dataset.id;
+      const color = row.querySelector(".cat-color-input").value;
+      const budget = parseFloat(row.querySelector(".cat-budget-input").value) || 0;
+      const cat = state.categorias.find(c => c.id === id);
+      if (cat) cat.color = color;
+      if (budget > 0) state.presupuestos[id] = budget; else delete state.presupuestos[id];
+    });
+    save(); document.getElementById("modalSettings").classList.remove("open");
+    toast("Ajustes guardados"); render();
+  };
+  document.getElementById("btnAddCat").onclick = () => {
+    const nameInput = document.getElementById("newCatName");
+    const colorInput = document.getElementById("newCatColor");
+    const name = nameInput.value.trim();
+    if (!name) { toast("Poné un nombre de categoría"); return; }
+    if (state.categorias.some(c => c.id === name)) { toast("Esa categoría ya existe"); return; }
+    state.categorias.push({ id: name, color: colorInput.value || "#6B7280" });
+    nameInput.value = "";
+    save(); renderCatSettingsList(); render();
+  };
+  document.getElementById("btnClearMonth").onclick = () => {
+    const mk = document.getElementById("monthSelect").value;
+    if (!confirm(`¿Vaciar todos los gastos de ${monthLabel(mk)}? Esta acción no se puede deshacer.`)) return;
+    state.gastos = state.gastos.filter(g => monthKey(g.fecha) !== mk);
+    save(); toast("Gastos de " + monthLabel(mk) + " eliminados"); render();
+  };
+
+  document.getElementById("btnExport").onclick = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "finanzas_gastos_backup.json"; a.click();
+    URL.revokeObjectURL(url);
+  };
+  document.getElementById("btnImport").onclick = () => document.getElementById("fileImport").click();
+  document.getElementById("fileImport").onchange = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(reader.result);
+        if (!confirm("Esto reemplaza los datos actuales por los del archivo importado. ¿Continuar?")) return;
+        state = Object.assign(defaultData(), imported);
+        save(); toast("Datos importados"); render();
+      } catch (err) { toast("Archivo inválido"); }
+    };
+    reader.readAsText(file); e.target.value = "";
+  };
+
+  // --- Dictado por voz (Web Speech API) ---
+  function normalizeText(s) {
+    return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+  function extractMonto(text) {
+    const match = text.match(/\d[\d.,]*/);
+    if (!match) return null;
+    let raw = match[0];
+    raw = raw.replace(/\.(?=\d{3}(\D|$))/g, "");
+    raw = raw.replace(",", ".");
+    const n = parseFloat(raw);
+    return isNaN(n) || n <= 0 ? null : n;
+  }
+  function extractCategoria(text) {
+    const t = normalizeText(text);
+    const found = state.categorias.find(c => t.includes(normalizeText(c.id)));
+    return found ? found.id : null;
+  }
+
+  function setupMic(btnId, onResult) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      btn.disabled = true;
+      btn.title = "Dictado por voz no disponible en este navegador";
+      return;
+    }
+    let recognizing = false;
+    const originalLabel = btn.textContent;
+    btn.onclick = () => {
+      if (recognizing) return;
+      let recognition;
+      try { recognition = new SpeechRec(); } catch (e) { toast("No se pudo iniciar el micrófono"); return; }
+      recognition.lang = "es-AR";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognizing = true;
+      btn.classList.add("listening");
+      btn.textContent = "🎙️ Escuchando…";
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        onResult(transcript);
+        toast("Escuchado: “" + transcript + "”");
+      };
+      recognition.onerror = () => { toast("No se pudo escuchar. Probá de nuevo."); };
+      recognition.onend = () => {
+        recognizing = false;
+        btn.classList.remove("listening");
+        btn.textContent = originalLabel;
+      };
+      try { recognition.start(); } catch (e) { recognizing = false; btn.classList.remove("listening"); btn.textContent = originalLabel; toast("No se pudo iniciar el micrófono"); }
+    };
+  }
+
+  setupMic("btnMicGasto", (transcript) => {
+    const monto = extractMonto(transcript);
+    const cat = extractCategoria(transcript);
+    if (monto) document.getElementById("inpMonto").value = monto;
+    document.getElementById("inpDesc").value = transcript;
+    if (cat) { selectedCat = cat; renderCatButtons(); }
+  });
+
+  setupMic("btnMicIngreso", (transcript) => {
+    const monto = extractMonto(transcript);
+    if (monto) document.getElementById("inpIngMonto").value = monto;
+    document.getElementById("inpIngFuente").value = transcript;
+  });
+
+  render();
+
+  // --- PWA: registro del service worker (offline + instalable) ---
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+})();
+
+</script>
+</body>
+</html>

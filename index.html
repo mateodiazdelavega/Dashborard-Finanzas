@@ -132,6 +132,12 @@ input:focus { border-bottom-color: var(--text); }
 .hist-amt { font-size: 14px; font-weight: 600; white-space: nowrap; }
 .hist-del { color: var(--muted); cursor: pointer; font-size: 15px; padding: 2px 4px; }
 .hist-del:hover { color: var(--red); }
+.hist-edit { color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 4px; }
+.hist-edit:hover { color: var(--accent); }
+.hist-actions { display: flex; gap: 16px; align-items: center; }
+.hist-actions .link-btn:last-child { margin-left: auto; }
+.modal select { border: none; border-bottom: 1px solid var(--border); padding: 10px 2px; font-size: 14px; font-family: inherit; color: var(--text); background: none; width: 100%; outline: none; }
+.modal select:focus { border-bottom-color: var(--text); }
 .list-scroll { max-height: 420px; overflow-y: auto; }
 .danger-link { margin-top: 14px; color: var(--muted); }
 .danger-link:hover { color: var(--red); }
@@ -242,8 +248,12 @@ input:focus { border-bottom-color: var(--text); }
   <div class="panel" data-panel="historial">
     <div class="field-block">
       <div class="section-label">Gastos del mes</div>
+      <input type="text" id="histSearch" placeholder="Buscar por categoría o descripción…" style="margin-bottom:14px;">
       <div class="list-scroll" id="expList"></div>
-      <button class="link-btn danger-link" id="btnClearMonth">Vaciar gastos de este mes</button>
+      <div class="hist-actions">
+        <button class="link-btn danger-link" id="btnClearMonth" style="margin-top:0;">Vaciar gastos de este mes</button>
+        <button class="link-btn" id="btnExportCsv">Descargar CSV</button>
+      </div>
     </div>
     <div class="field-block">
       <div class="section-label">Ingresos del mes</div>
@@ -256,8 +266,15 @@ input:focus { border-bottom-color: var(--text); }
   <div class="modal">
     <h3>Ajustes</h3>
     <div class="f">
-      <label>Ingreso mensual fijo (ARS)</label>
+      <label>Ingreso mensual fijo</label>
       <input type="number" id="setIngreso">
+    </div>
+    <div class="f">
+      <label>Moneda (solo cambia cómo se muestran los montos, no convierte)</label>
+      <select id="setMoneda">
+        <option value="ARS">Pesos argentinos (ARS)</option>
+        <option value="USD">Dólares (USD)</option>
+      </select>
     </div>
     <div class="f">
       <label>Categorías y presupuesto mensual (opcional)</label>
@@ -271,6 +288,20 @@ input:focus { border-bottom-color: var(--text); }
     <div class="modal-actions">
       <button class="link-btn" id="btnCloseSettings">Cancelar</button>
       <button class="btn" style="width:auto;" id="btnSaveSettings">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalEdit">
+  <div class="modal">
+    <h3>Editar gasto</h3>
+    <div class="f"><label>Categoría</label><select id="editCat"></select></div>
+    <div class="f"><label>Monto</label><input type="number" id="editMonto" inputmode="decimal"></div>
+    <div class="f"><label>Fecha</label><input type="date" id="editFecha"></div>
+    <div class="f"><label>Descripción</label><input type="text" id="editDesc"></div>
+    <div class="modal-actions">
+      <button class="link-btn" id="btnCloseEdit">Cancelar</button>
+      <button class="btn" style="width:auto;" id="btnSaveEdit">Guardar</button>
     </div>
   </div>
 </div>
@@ -301,7 +332,8 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
       })),
       ingresoMensual: SEED_DATA.ingresoMensual,
       categorias: DEFAULT_CATS.map(c => ({ ...c })),
-      presupuestos: {}
+      presupuestos: {},
+      moneda: "ARS"
     };
   }
   function load() {
@@ -322,7 +354,11 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
   let state = load();
   let selectedCat = null;
 
-  const fmtARS = n => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n || 0);
+  const fmtARS = n => {
+    const cur = state.moneda || "ARS";
+    const locale = cur === "USD" ? "en-US" : "es-AR";
+    return new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(n || 0);
+  };
   const monthKey = d => d.slice(0, 7);
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const catColor = id => (state.categorias.find(c => c.id === id) || {}).color || "#6B7280";
@@ -430,16 +466,25 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
   }
   function renderExpenseList(mk) {
     const list = document.getElementById("expList");
-    const items = gastosDelMes(mk).slice().sort((a,b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
-    if (!items.length) { list.innerHTML = `<div class="empty">Nada cargado este mes.</div>`; return; }
+    const term = (document.getElementById("histSearch")?.value || "").trim().toLowerCase();
+    let items = gastosDelMes(mk).slice().sort((a,b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+    if (term) items = items.filter(g => (g.categoria + " " + (g.desc || "")).toLowerCase().includes(term));
+    if (!items.length) {
+      list.innerHTML = `<div class="empty">${term ? "Sin resultados para la búsqueda." : "Nada cargado este mes."}</div>`;
+      return;
+    }
     list.innerHTML = items.map(g => `
       <div class="hist-row">
         <div class="hist-dot" style="background:${catColor(g.categoria)}"></div>
         <div class="hist-meta"><div class="cat">${g.categoria}${g.desc ? " · " + g.desc : ""}</div><div class="desc">${g.fecha}</div></div>
         <div class="hist-amt">${fmtARS(g.monto)}</div>
+        <div class="hist-edit" data-id="${g.id}">✎</div>
         <div class="hist-del" data-id="${g.id}">✕</div>
       </div>
     `).join("");
+    list.querySelectorAll(".hist-edit").forEach(el => {
+      el.onclick = () => openEditGasto(Number(el.dataset.id));
+    });
     list.querySelectorAll(".hist-del").forEach(el => {
       el.onclick = () => { state.gastos = state.gastos.filter(g => g.id !== Number(el.dataset.id)); save(); render(); };
     });
@@ -549,12 +594,14 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
 
   document.getElementById("btnSettings").onclick = () => {
     document.getElementById("setIngreso").value = state.ingresoMensual || "";
+    document.getElementById("setMoneda").value = state.moneda || "ARS";
     renderCatSettingsList();
     document.getElementById("modalSettings").classList.add("open");
   };
   document.getElementById("btnCloseSettings").onclick = () => document.getElementById("modalSettings").classList.remove("open");
   document.getElementById("btnSaveSettings").onclick = () => {
     state.ingresoMensual = parseFloat(document.getElementById("setIngreso").value) || 0;
+    state.moneda = document.getElementById("setMoneda").value || "ARS";
     document.querySelectorAll("#catSettingsList .cat-setting-row").forEach(row => {
       const id = row.dataset.id;
       const color = row.querySelector(".cat-color-input").value;
@@ -581,6 +628,53 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
     if (!confirm(`¿Vaciar todos los gastos de ${monthLabel(mk)}? Esta acción no se puede deshacer.`)) return;
     state.gastos = state.gastos.filter(g => monthKey(g.fecha) !== mk);
     save(); toast("Gastos de " + monthLabel(mk) + " eliminados"); render();
+  };
+
+  // --- Editar gasto ---
+  let editingId = null;
+  function openEditGasto(id) {
+    const g = state.gastos.find(x => x.id === id);
+    if (!g) return;
+    editingId = id;
+    const sel = document.getElementById("editCat");
+    sel.innerHTML = state.categorias.map(c => `<option value="${c.id}">${c.id}</option>`).join("");
+    sel.value = g.categoria;
+    document.getElementById("editMonto").value = g.monto;
+    document.getElementById("editFecha").value = g.fecha;
+    document.getElementById("editDesc").value = g.desc || "";
+    document.getElementById("modalEdit").classList.add("open");
+  }
+  document.getElementById("btnCloseEdit").onclick = () => document.getElementById("modalEdit").classList.remove("open");
+  document.getElementById("btnSaveEdit").onclick = () => {
+    const g = state.gastos.find(x => x.id === editingId);
+    if (!g) { document.getElementById("modalEdit").classList.remove("open"); return; }
+    const monto = parseFloat(document.getElementById("editMonto").value);
+    if (!monto || monto <= 0) { toast("Ingresá un monto válido"); return; }
+    g.categoria = document.getElementById("editCat").value;
+    g.monto = monto;
+    g.fecha = document.getElementById("editFecha").value || g.fecha;
+    g.desc = document.getElementById("editDesc").value.trim();
+    save(); document.getElementById("modalEdit").classList.remove("open");
+    toast("Gasto actualizado"); render();
+  };
+
+  // --- Búsqueda en el historial ---
+  document.getElementById("histSearch").addEventListener("input", () => {
+    renderExpenseList(document.getElementById("monthSelect").value);
+  });
+
+  // --- Exportar todos los gastos a CSV ---
+  document.getElementById("btnExportCsv").onclick = () => {
+    if (!state.gastos.length) { toast("No hay gastos para exportar"); return; }
+    const esc = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const rows = state.gastos.slice().sort((a, b) => a.fecha.localeCompare(b.fecha) || a.id - b.id);
+    const csv = ["fecha,categoria,monto,descripcion"]
+      .concat(rows.map(g => [g.fecha, esc(g.categoria), g.monto, esc(g.desc || "")].join(",")))
+      .join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "finanzas_gastos.csv"; a.click();
+    URL.revokeObjectURL(url);
   };
 
   document.getElementById("btnExport").onclick = () => {

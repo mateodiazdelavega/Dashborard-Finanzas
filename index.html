@@ -60,7 +60,10 @@ select#monthSelect {
 /* hero */
 .hero-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
 .hero-number { font-size: 52px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 6px; }
-.hero-sub { font-size: 13px; color: var(--muted); min-height: 16px; margin-bottom: 38px; }
+.hero-sub { font-size: 13px; color: var(--muted); min-height: 16px; margin-bottom: 22px; }
+.balance-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 40px; }
+.balance-cell .bl-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+.balance-cell .bl-value { font-size: 16px; font-weight: 600; white-space: nowrap; }
 
 /* category list */
 .section-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 14px; }
@@ -193,6 +196,8 @@ input:focus { border-bottom-color: var(--text); }
     <div class="hero-label" id="heroLabel">Gastado en julio</div>
     <div class="hero-number" id="heroNumber">$0</div>
     <div class="hero-sub" id="heroProjection"></div>
+
+    <div class="balance-row" id="balanceRow"></div>
 
     <div class="section-label">Categorías principales</div>
     <div id="catList"></div>
@@ -371,6 +376,13 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
       heroProj.textContent = "";
     }
 
+    const ingresoMes = ingresoDelMes(mk);
+    const balance = ingresoMes - gasto;
+    document.getElementById("balanceRow").innerHTML = `
+      <div class="balance-cell"><div class="bl-label">Ingresos</div><div class="bl-value" style="color:var(--green)">${fmtARS(ingresoMes)}</div></div>
+      <div class="balance-cell"><div class="bl-label">Gastos</div><div class="bl-value">${fmtARS(gasto)}</div></div>
+      <div class="balance-cell"><div class="bl-label">Balance</div><div class="bl-value" style="color:${balance >= 0 ? "var(--green)" : "var(--red)"}">${(balance >= 0 ? "+" : "-") + fmtARS(Math.abs(balance)).replace("-", "")}</div></div>`;
+
     const catTotals = state.categorias.map(c => ({ ...c, total: gastosDelMes(mk).filter(g => g.categoria === c.id).reduce((s,g)=>s+g.monto,0) }))
       .filter(c => c.total > 0).sort((a,b) => b.total - a.total);
     const maxTotal = catTotals.length ? catTotals[0].total : 1;
@@ -452,7 +464,10 @@ const SEED_DATA = {"gastos": [{"id": 1782777600005, "fecha": "2026-06-30", "cate
   function renderChartAhorro() {
     const ctx = document.getElementById("chartAhorro");
     const months = last12Months().slice(-6);
-    const data = months.map(mk => ingresoDelMes(mk) - totalGastos(mk));
+    const data = months.map(mk => {
+      const hayActividad = ingresosDelMes(mk).length > 0 || gastosDelMes(mk).length > 0;
+      return hayActividad ? ingresoDelMes(mk) - totalGastos(mk) : 0;
+    });
     if (chartAhorroInstance) chartAhorroInstance.destroy();
     chartAhorroInstance = new Chart(ctx, {
       type: "bar",

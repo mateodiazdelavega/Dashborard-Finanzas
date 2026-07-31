@@ -105,7 +105,31 @@ h2{font-size:19px; line-height:1.3; margin:0 0 12px; font-weight:600}
 .comp .barra i{display:block; height:100%; background:var(--dim)}
 .comp.yo .nom{color:var(--oro); font-weight:600} .comp.yo .barra i{background:var(--oro)}
 
+/* ---------- conceptos y logros ---------- */
+.concepto{padding:16px 18px}
+.concepto-n{font-family:Georgia,serif; font-size:17px; color:var(--oro); margin-bottom:7px}
+.concepto-t{font-size:15px; line-height:1.58; color:#ddd4ca}
+.pendientes{display:flex; flex-wrap:wrap; gap:7px; margin-top:4px}
+.pendiente{font-size:12.5px; color:var(--dim); border:1px dashed var(--line);
+  border-radius:7px; padding:5px 9px}
+.logro{display:flex; gap:11px; align-items:baseline; padding:8px 0; font-size:14.5px;
+  border-bottom:1px solid var(--line)}
+.logro:last-child{border-bottom:none}
+.logro-tic{color:var(--oro); font-size:11px; flex:0 0 auto}
+.logro-d{display:block; font-size:13px; color:var(--muted); margin-top:2px}
+
+/* ---------- aviso de desbloqueo ---------- */
+.desbloqueo{display:flex; gap:11px; align-items:flex-start; background:var(--card2);
+  border:1px solid var(--line); border-left:2px solid var(--oro); border-radius:10px;
+  padding:13px 15px; margin-bottom:12px}
+.desbloqueo .ico{color:var(--oro); font-size:12px; flex:0 0 auto; line-height:1.5}
+.desbloqueo .cab{font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--dim); margin-bottom:5px}
+.desbloqueo .ttl{font-family:Georgia,serif; font-size:16px; color:var(--oro); margin-bottom:5px}
+.desbloqueo .cpo{font-size:14.5px; line-height:1.55; color:#ddd4ca}
+
 .fade{animation:fade .32s ease}
+@media (prefers-reduced-motion:reduce){ .fade{animation:none} }
 @keyframes fade{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
 .nota{font-size:12.5px; color:var(--dim); line-height:1.5; margin-top:20px}
 hr.sep{border:none; border-top:1px solid var(--line); margin:22px 0}
@@ -192,8 +216,65 @@ function nuevaPartida(origen){
     // métricas
     animoSuma: 0, animoN: 0, mesesEnRojo: 0, picoDeuda: 0, aporteTotal: 0,
     historia: [],                     // decisiones tomadas, para el epílogo
+    conceptos: {}, logros: {},        // lo aprendido y lo conseguido
+    nuevos: [],                       // desbloqueos pendientes de avisar
+    animoCero: 0,                     // meses seguidos con el ánimo en el piso
+    finTemprano: null,                // si la partida se corta antes de los 10 años
+    golpes: 0, suertes: 0,            // cuántas veces te pegó y te sonrió el azar
   };
   return S;
+}
+
+/* ==========================================================================
+   CONCEPTOS
+   No hay tutorial. Cada idea se desbloquea el día que te pasa, y recién ahí
+   se te explica lo que acabás de vivir. Al final ves cuáles te faltan: son
+   los que solo aparecen si tomás otras decisiones.
+   ========================================================================== */
+const CONCEPTOS = {
+  licuacion:   { n:"Licuación", t:"Tu sueldo es un número fijo en un mundo de precios que suben. Si el aumento llega cada seis meses y por debajo de la inflación, cada mes que pasa comprás un poco menos con lo mismo. No te sacaron plata: te la derritieron." },
+  tasaReal:    { n:"Tasa real", t:"La tasa que te pagan menos la inflación. Un plazo fijo al 4% mensual con inflación del 5% te está haciendo perder 1% por mes, aunque el número de tu cuenta suba. Mirá siempre la resta, nunca el número solo." },
+  fondo:       { n:"Fondo de emergencia", t:"Plata aburrida y disponible que no rinde casi nada. No sirve para ganar: sirve para que un golpe sea un golpe y no el principio de una espiral. Es lo que te deja rechazar el primer trabajo malo que aparezca." },
+  interesComp: { n:"Interés compuesto", t:"Los intereses generan intereses. Juega a tu favor cuando invertís y en tu contra cuando debés. Con la tarjeta al 8% mensual, una deuda se duplica sola en menos de un año sin que compres nada más." },
+  costoOport:  { n:"Costo de oportunidad", t:"Toda plata parada está eligiendo no estar en otro lado. Dejar pesos quietos con inflación no es 'no hacer nada': es elegir perder, solo que despacio y sin que se note." },
+  diversif:    { n:"Diversificación", t:"Repartir para no depender de acertar. Nunca vas a ganar la charla del asado con esta estrategia, porque no hay anécdota. Es exactamente por eso que funciona a diez años." },
+  atrasoCamb:  { n:"Atraso cambiario", t:"Cuando el dólar se queda quieto y los precios no, se está poniendo barato en términos reales. Nadie avisa. Podés pasarte meses sintiendo que te equivocaste, hasta que corrige en una semana." },
+  cuotasInfl:  { n:"Cuotas sin interés", t:"Una cuota fija en pesos, con inflación alta, vale cada vez menos. Comprar en doce cuotas sin interés puede ser buen negocio. La trampa nunca es una cuota: son seis al mismo tiempo." },
+  gastoFijo:   { n:"Gasto fijo", t:"Lo que pagás todos los meses para siempre. Un gasto grande de una vez casi nunca te hunde; un gasto fijo nuevo te acompaña una década. El auto no cuesta lo que pagaste: cuesta eso más todo lo que viene después." },
+  capitalHum:  { n:"Capital humano", t:"Lo que sabés hacer. Es lo único de tu patrimonio que la inflación no puede licuar, que nadie te puede robar y que suele rendir más que cualquier inversión que te vayan a ofrecer." },
+  riesgoContr: { n:"Riesgo de contraparte", t:"El que promete devolverte puede no devolverte, por mala fe o por mala suerte. Prestar plata es comprar una promesa. Prestá siempre pensando que capaz no vuelve." },
+  tamApuesta:  { n:"Tamaño de la apuesta", t:"Importa más cuánto ponés que a qué le ponés. Una apuesta que no te cambia la vida si sale mal es una apuesta que podés repetir. La que te funde, no." },
+  suerteHab:   { n:"Suerte y habilidad", t:"Un buen resultado no prueba que la decisión fue buena. Con las mismas cartas, la mayoría de las veces se pierde. Juzgá cómo decidiste, no cómo salió — es la única forma de aprender algo." },
+  liquidez:    { n:"Liquidez", t:"Qué tan rápido podés convertir algo en plata sin perder valor. Un depto vale mucho y no te salva el martes que se rompe la heladera. Tener todo bien invertido y nada disponible es un problema disfrazado de virtud." },
+  seguro:      { n:"Transferencia de riesgo", t:"Pagar poco todos los meses para que otro se coma la pérdida grande. Un seguro tiene rendimiento negativo esperado y aun así conviene, porque lo que te funde no es el promedio: es la cola." },
+  estafa:      { n:"Si es demasiado bueno", t:"Rendimientos altos, garantizados y sin riesgo no existen juntos. Cuando alguien te ofrece los tres, la plata que reparte es la de los que entraron después. Vos podés ser cualquiera de los dos grupos." },
+};
+
+/* ==========================================================================
+   LOGROS
+   ========================================================================== */
+const LOGROS = {
+  primerColchon: { n:"Primer colchón",      d:"Llegaste a seis meses de aire" },
+  sinDeuda:      { n:"Nunca debiste nada",  d:"Toda la década sin un peso de deuda" },
+  sobreviviente: { n:"Sobreviviente",       d:"Pasaste una crisis sin endeudarte" },
+  cabezaFria:    { n:"Cabeza fría",         d:"No vendiste tus dólares en el pico" },
+  repartido:     { n:"No pusiste todo",     d:"Terminaste con pesos, dólares y plazo fijo a la vez" },
+  vividor:       { n:"Valió la pena",       d:"Terminaste con el ánimo por encima de 75" },
+  aguante:       { n:"Aguantaste",          d:"Te quedaste sin trabajo y saliste sin deuda" },
+  buenPibe:      { n:"Buen pibe",           d:"Ayudaste a tu familia cuando hizo falta" },
+  estudioso:     { n:"Te capacitaste",      d:"Invertiste en aprender algo" },
+  escarmentado:  { n:"Escarmentado",        d:"Te comiste una estafa y seguiste de pie" },
+};
+
+function aprender(id){
+  if(S.conceptos[id]) return;
+  S.conceptos[id] = S.mes;
+  S.nuevos.push({ tipo:"concepto", id });
+}
+function lograr(id){
+  if(S.logros[id]) return;
+  S.logros[id] = S.mes;
+  S.nuevos.push({ tipo:"logro", id });
 }
 
 /* ---------- lecturas derivadas ---------- */
@@ -211,6 +292,7 @@ const aireTexto = a => a <= 0 ? "0" : a > 60 ? "60+" : a.toFixed(1).replace(".",
 const tasaPF     = () => S.inflMes * rnd(REGIMENES[S.regimen].tasaPF[0], REGIMENES[S.regimen].tasaPF[1]);
 const tasaDeuda  = () => S.inflMes + rnd(.030,.055);        // la tarjeta siempre gana
 /* Nadie te presta infinito. El límite es lo que un banco de verdad te daría. */
+const deudaTotal = () => S.deuda + S.cuotas.reduce((a,c) => a + c.monto * c.restantes, 0);
 const limiteCredito = () => (S.trabajo ? S.sueldo * 2.5 : S.gastos * 1.5);
 
 /* ---------- mutadores usados por las escenas ---------- */
@@ -332,6 +414,7 @@ function avanzarMes(){
     S.ipcUltimaParitaria = S.ipc;
     S.mesesDesdeParitaria = 0;
     S.avisos.push("Cerró la paritaria: " + pct(sube) + " de aumento. La inflación del período fue " + pct(atraso) + ".");
+    if(cobertura < .95) aprender("licuacion");
   }
 
   /* La referencia sube cuando de verdad progresás (un ascenso, un curso, cambiar
@@ -361,10 +444,18 @@ function avanzarMes(){
   }
 
   // --- rendimientos y deuda ---
-  if(S.plazo > 0){ S.plazo *= (1 + tasaPF()); S.plazoMeses++; }
+  if(S.plazo > 0){
+    const t = tasaPF();
+    S.ultimaTasaPF = t;
+    S.plazo *= (1 + t); S.plazoMeses++;
+    // La lección aparece el día que la tasa le pierde a la inflación, no antes.
+    if(t < S.inflMes && S.plazoMeses > 2) aprender("tasaReal");
+  }
+  if(S.pesos > S.gastos * 3 && S.inflMes > .02) aprender("costoOport");
   if(S.deuda > 0){
     const i = S.deuda * tasaDeuda();
     S.deuda += i;
+    if(S.deuda > S.sueldo) aprender("interesComp");
     S.detalle.push(["Intereses de la tarjeta", -i]);
     S.egMes += i;
     // pago automático si hay con qué: primero la deuda cara
@@ -387,6 +478,10 @@ function avanzarMes(){
   S.picoDeuda = Math.max(S.picoDeuda, S.deuda);
   if(S.deuda > 0) S.mesesEnRojo++;
 
+  // --- logros que se ganan viviendo, no eligiendo ---
+  if(aire() >= 6) lograr("primerColchon");
+  if(S.regimen === "crisis" && S.deuda === 0 && S.mes > 12) lograr("sobreviviente");
+
   /* --- ánimo ---
      Baja sola cuando no hay margen y sube sola cuando lo hay, pero despacio:
      lo que de verdad la mueve son las decisiones. Si el desgaste pasivo pesara
@@ -396,6 +491,7 @@ function avanzarMes(){
   if(S.deuda > S.sueldo) animo(-1.1);
   if(!S.trabajo) animo(-2.2);
   S.animoSuma += S.animo; S.animoN++;
+  S.animoCero = S.animo <= 2 ? S.animoCero + 1 : 0;
 
   // --- despido aleatorio ---
   if(S.trabajo && S.mes > 8 && Math.random() < R.pDespido){
@@ -477,7 +573,7 @@ const HITOS = [
         En un país donde todo sube, también es facilísimo perder la cuenta.</p>`; } },
     { txt:"Aceptarla y estrenarla ya",
       sub:"Algo te vas a comprar igual.",
-      hacer(){ S.flags.tarjeta = true; enCuotas(340000, 6, "Compra a 6 cuotas"); animo(5);
+      hacer(){ aprender("cuotasInfl"); S.flags.tarjeta = true; enCuotas(340000, 6, "Compra a 6 cuotas"); animo(5);
         recordar("Estrenó la tarjeta en seis cuotas");
         return `<p>Seis cuotas de ${fmt(340000/6)}. Suena a nada.</p>
         <p>Suena a nada ahora. En el resumen del mes que viene va a estar, y en el otro, y en el otro.</p>`; } },
@@ -505,19 +601,19 @@ const HITOS = [
         en lugar de otro.</p>`; } },
     { txt:"Comprar una parte, dejar el resto en pesos",
       sub:"La mitad y la mitad.",
-      hacer(){ const c = comprarUsd(S.pesos*.5); recordar("Se dolarizó a medias");
+      hacer(){ aprender("diversif"); const c = comprarUsd(S.pesos*.5); recordar("Se dolarizó a medias");
         return `<p>Comprás ${usd(c)} y dejás el resto disponible.</p>
         <p>No vas a ganar la charla de sobremesa con esta estrategia. Nadie cuenta anécdotas
         sobre el que hizo la mitad de cada cosa.</p>`; } },
     { txt:"Plazo fijo, que algo rinde",
       sub:"Tasa en pesos, a treinta días.",
-      hacer(){ const m = ponerPlazo(S.pesos*.8); recordar("Hizo su primer plazo fijo");
+      hacer(){ aprender("tasaReal"); const m = ponerPlazo(S.pesos*.8); recordar("Hizo su primer plazo fijo");
         return `<p>Ponés ${fmt(m)} a treinta días.</p>
         <p>La tasa se ve linda escrita. Después vas a comparar cuánto rindió contra cuánto
         subieron las cosas, y ahí la conversación va a ser otra.</p>`; } },
     { txt:"Nada. No entendés y no querés meter la pata",
       sub:"Dejar la plata donde está.",
-      hacer(){ animo(-1); recordar("No hizo nada con el tema del dólar");
+      hacer(){ aprender("costoOport"); animo(-1); recordar("No hizo nada con el tema del dólar");
         return `<p>Te quedás callado el resto de la sobremesa.</p>
         <p>No hacer nada es cómodo porque no se siente como una decisión. Lo es. Y en un país
         con inflación, es de las que más caro salen.</p>`; } },
@@ -597,7 +693,7 @@ const HITOS = [
         en tu gente rara vez es la que te arrepentís de haber gastado.</p>`; } },
     { txt:"Ir, pero en doce cuotas",
       sub:"Cuota fija en pesos. Con inflación, se licúa.",
-      hacer(){ enCuotas(S.sueldo*1.9, 12, "Viaje en 12 cuotas"); animo(14); S.flags.viajo = true;
+      hacer(){ aprender("cuotasInfl"); enCuotas(S.sueldo*1.9, 12, "Viaje en 12 cuotas"); animo(14); S.flags.viajo = true;
         recordar("Financió el viaje a doce cuotas");
         return `<p>Doce cuotas fijas de ${fmt(S.sueldo*1.9/12)}.</p>
         <p>Acá pasa algo raro y a favor: la cuota no se mueve mientras todo lo demás sube. Dentro
@@ -619,7 +715,7 @@ const HITOS = [
   opciones: [
     { txt:"Tomarte un tiempo y buscar bien",
       sub:"Requiere colchón. Si no lo tenés, se pone feo.",
-      hacer(){ S.trabajo = null; animo(aire() > 4 ? -2 : -12); recordar("Se quedó sin trabajo y se tomó tiempo");
+      hacer(){ aprender("fondo"); S.trabajo = null; animo(aire() > 4 ? -2 : -12); recordar("Se quedó sin trabajo y se tomó tiempo");
         return aire() > 4
           ? `<p>Te tomás las mañanas para buscar en serio y las tardes para respirar.</p>
              <p>Esto lo estás pudiendo hacer por una sola razón: hay plata guardada. El colchón
@@ -679,7 +775,7 @@ const HITOS = [
   opciones: [
     { txt:"Entrar con todo lo que puedas",
       sub:"Si sale, sale grande.",
-      hacer(){ const m = Math.min(S.sueldo*4, Math.max(0,S.pesos)); gastar(m,"Inversión en el negocio");
+      hacer(){ aprender("suerteHab"); const m = Math.min(S.sueldo*4, Math.max(0,S.pesos)); gastar(m,"Inversión en el negocio");
         const suerte = Math.random();
         if(suerte < .28){ cobrar(m*rnd(2.2,4.5),"Le fue bien al negocio"); animo(12);
           recordar("Puso plata en el negocio de un conocido y le fue bien");
@@ -697,7 +793,7 @@ const HITOS = [
         te había costado años juntar.</p>`; } },
     { txt:"Entrar con poco, lo que te bancás perder",
       sub:"Un mes de sueldo, no más.",
-      hacer(){ const m = Math.min(S.sueldo, Math.max(0,S.pesos)); gastar(m,"Inversión chica");
+      hacer(){ aprender("tamApuesta"); const m = Math.min(S.sueldo, Math.max(0,S.pesos)); gastar(m,"Inversión chica");
         if(Math.random() < .3){ cobrar(m*rnd(2,4),"Rindió la apuesta chica"); animo(6); }
         else animo(-2);
         recordar("Entró con poco en el negocio de un conocido");
@@ -712,6 +808,87 @@ const HITOS = [
         una cantidad enorme de plata y de amigos.</p>`; } },
   ]
 },
+{
+  id:"hijo", mes:64, cond: () => !!S.flags.pareja,
+  texto: () => `<p>La conversación aparece una noche cualquiera, lavando los platos.</p>
+  <p>Los dos saben que nunca va a haber un momento en que los números estén listos.</p>`,
+  opciones: [
+    { txt:"Que sea ahora",
+      sub:"Los gastos suben para siempre. Vos también cambiás.",
+      hacer(){ S.flags.hijo = true; S.gastos *= 1.30; animo(17); aprender("gastoFijo");
+        recordar("Tuvo un hijo");
+        return `<p>Nace en un invierno. No dormís por cuatro meses.</p>
+        <p>Tus gastos fijos subieron un tercio, de una vez y para siempre, y ninguna de las
+        dos cosas que sentís tiene que ver con eso.</p>`; } },
+    { txt:"Esperar a estar más armados",
+      sub:"Primero el colchón.",
+      hacer(){ animo(-3); S.flags.esperando = true; recordar("Decidió esperar para tener hijos");
+        return `<p>Lo hablan y lo dejan para más adelante.</p>
+        <p>Es prudente. Lo que nadie te dice es que "más armados" es un lugar que se corre solo:
+        cuando llegás, siempre falta un poco más.</p>`; } },
+    { txt:"No es lo que querés",
+      sub:"Y está bien.",
+      hacer(){ animo(4); recordar("Decidió no tener hijos");
+        return `<p>Lo hablan en serio, por primera vez.</p>
+        <p>Es una vida distinta, no una vida menor. Y financieramente es otro juego: menos
+        gastos fijos, más margen, y la libertad que viene con eso.</p>`; } },
+  ]
+},
+{
+  id:"depto", mes:88,
+  texto: () => `<p>Un dos ambientes. Piden ${usd(58000)}, y podrías poner
+  ${usd(Math.max(0, patrimonio()/S.dolar)).replace("US$","")} dólares de anticipo.</p>
+  <p>Tu vieja pregunta cada vez que te ve cuándo vas a dejar de tirar la plata en el alquiler.</p>`,
+  opciones: [
+    { txt:"Comprarlo con crédito",
+      sub:"Cuota en pesos ajustada por inflación. El alquiler deja de subir.",
+      cond: () => patrimonio() / S.dolar > 12000,
+      hacer(){ const ent = Math.min(S.usd, 12000); S.usd -= ent;
+        S.cuotas.push({ monto: S.gastos*.42, restantes: 60, desc:"Cuota del departamento" });
+        S.gastos *= .55; S.flags.depto = true; animo(14);
+        aprender("liquidez"); aprender("gastoFijo"); recordar("Compró un departamento");
+        return `<p>Firmás en una escribanía de Once, con la mano temblando.</p>
+        <p>Dejaste de pagar alquiler y ahora tenés casi todo tu patrimonio en una sola cosa que
+        no podés vender el martes que se rompe la heladera. Ganaste techo y perdiste liquidez:
+        no es gratis, es un cambio.</p>`; } },
+    { txt:"Seguir alquilando e invertir la diferencia",
+      sub:"Menos ancla, más margen.",
+      hacer(){ aprender("liquidez"); recordar("Eligió seguir alquilando");
+        return `<p>Le decís a tu vieja que no y te comés la charla.</p>
+        <p>Alquilar y tener la plata disponible no es tirarla: es pagar por flexibilidad. Funciona
+        con una condición — que la diferencia la guardes de verdad y no se te vaya en el mes.</p>`; } },
+    { txt:"Todavía no llegás",
+      hacer(){ animo(-6); recordar("No le daba para comprar");
+        return `<p>Hacés la cuenta tres veces y no da.</p>
+        <p>No da porque los sueldos en dólares de este país y los precios de las propiedades
+        viven en dos economías distintas. No es un problema tuyo de disciplina.</p>`; } },
+  ]
+},
+{
+  id:"padres", mes:104,
+  texto: () => `<p>A tu viejo lo internan tres días. Sale bien, pero algo cambió.</p>
+  <p>Hay que empezar a pensar cosas que nadie quiere pensar.</p>`,
+  opciones: [
+    { txt:"Hacerte cargo de lo que haga falta",
+      hacer(){ S.gastos *= 1.14; animo(6); lograr("buenPibe"); aprender("gastoFijo");
+        recordar("Se hizo cargo de sus viejos");
+        return `<p>Ponés para la enfermera de la mañana y para los remedios.</p>
+        <p>Otro gasto fijo, y de los que no se negocian. Esta es la parte de las finanzas
+        personales que ninguna planilla contempla: tu plata casi nunca es solo tuya.</p>`; } },
+    { txt:"Repartirlo con tus hermanos",
+      hacer(){ S.gastos *= 1.06; animo(3); lograr("buenPibe");
+        recordar("Repartió el cuidado de sus viejos con los hermanos");
+        return `<p>Se juntan los tres y arman un esquema. Hay una charla incómoda sobre quién
+        puede poner cuánto.</p>
+        <p>Hablarlo antes, con números sobre la mesa, evita la versión mucho peor de esta
+        conversación: la que se tiene tarde y con reproches.</p>`; } },
+    { txt:"No podés hacerte cargo",
+      hacer(){ animo(-11); recordar("No pudo hacerse cargo de sus viejos");
+        return `<p>Explicás tu situación. Nadie te lo reprocha en voz alta.</p>
+        <p>Es la clase de límite que se siente como un fracaso personal y casi siempre es el
+        resultado de una década sin margen.</p>`; } },
+  ]
+},
 ];
 
 /* ---------- EVENTOS: bolsa aleatoria, condicionados por el estado ---------- */
@@ -722,7 +899,7 @@ const EVENTOS = [
   que es peor.</p><p>Una nueva sale ${fmt(S.gastos*1.4)}.</p>`,
   opciones: [
     { txt:"Comprarla en doce cuotas sin interés",
-      hacer(){ enCuotas(S.gastos*1.4, 12, "Heladera");
+      hacer(){ aprender("cuotasInfl"); enCuotas(S.gastos*1.4, 12, "Heladera");
         return `<p>Llega el sábado.</p><p>Doce cuotas fijas mientras todo sube: en un año esa cuota
         va a valer la mitad. Las cuotas sin interés no son una trampa, son una herramienta.
         La trampa es tener seis al mismo tiempo.</p>`; } },
@@ -754,7 +931,7 @@ const EVENTOS = [
         S.gastos *= rnd(1.14,1.24); animo(-4);
         return `<p>No afloja. Dice que "está por debajo de mercado".</p><p>Aceptás igual.</p>`; } },
     { txt:"Mudarte a algo más barato",
-      hacer(){ gastar(S.gastos*1.6,"Mudanza, depósito y comisión"); S.gastos *= .84; S.gastosPiso *= .84; animo(-7);
+      hacer(){ aprender("gastoFijo"); gastar(S.gastos*1.6,"Mudanza, depósito y comisión"); S.gastos *= .84; S.gastosPiso *= .84; animo(-7);
         return `<p>Mudarse cuesta: depósito, comisión, flete, y dos fines de semana de tu vida.</p>
         <p>Pero te bajás el gasto fijo para siempre. Los gastos fijos son los que te ahogan; un
         gasto grande de una vez casi nunca es el problema.</p>`; } },
@@ -766,7 +943,7 @@ const EVENTOS = [
   y todos se acercan a mirar.</p><p>Dice que todavía estás a tiempo.</p>`,
   opciones: [
     { txt:"Poner una parte grande",
-      hacer(){ const m = Math.max(0,S.pesos)*.4; gastar(m,"Cripto");
+      hacer(){ aprender("suerteHab"); const m = Math.max(0,S.pesos)*.4; gastar(m,"Cripto");
         const r = Math.random();
         if(r < .3){ cobrar(m*rnd(1.8,3.2),"Cripto: salió"); animo(9);
           return `<p>Sube. Vendés y te sentís un genio.</p><p>No lo sos. Tuviste suerte, y la
@@ -824,7 +1001,7 @@ const EVENTOS = [
   te promete devolverlo el mes que viene.</p><p>Nunca te pidió nada.</p>`,
   opciones: [
     { txt:"Prestarle",
-      hacer(){ gastar(S.sueldo*.6,"Préstamo a un amigo");
+      hacer(){ aprender("riesgoContr"); gastar(S.sueldo*.6,"Préstamo a un amigo");
         if(Math.random() < .5){ cobrar(S.sueldo*.6,"Te devolvió"); animo(5);
           return `<p>Te devuelve. Tarde, pero te devuelve.</p><p>Y te lo agradece de una forma
           que te da un poco de vergüenza.</p>`; }
@@ -856,7 +1033,7 @@ const EVENTOS = [
         que no puedas sostener.</p>`; } },
     { txt:"Cancelar deuda",
       cond: () => S.deuda > 0,
-      hacer(){ cobrar(S.sueldo*1.2,"Bono"); const p = Math.min(S.deuda, S.sueldo*1.2);
+      hacer(){ aprender("interesComp"); cobrar(S.sueldo*1.2,"Bono"); const p = Math.min(S.deuda, S.sueldo*1.2);
         S.pesos -= p; S.deuda -= p; animo(4);
         return `<p>Cancelás ${fmt(p)} de deuda.</p>
         <p>No se siente como ganar plata, pero lo es: pagar una deuda que te cobra 5% mensual
@@ -934,7 +1111,7 @@ const EVENTOS = [
         return `<p>Comprás ${usd(c)}.</p><p>Dejás de perder contra la inflación y empezás a
         depender de otra cosa: que el dólar acompañe. Es cambiar de riesgo, no sacárselo.</p>`; } },
     { txt:"Repartir entre los dos",
-      hacer(){ const m = ponerPlazo(S.pesos*.4); const c = comprarUsd(S.pesos*.65);
+      hacer(){ aprender("diversif"); const m = ponerPlazo(S.pesos*.4); const c = comprarUsd(S.pesos*.65);
         return `<p>${fmt(m)} a plazo fijo y ${usd(c)} en dólares.</p>
         <p>No vas a ganar en ningún escenario. Tampoco vas a perder feo en ninguno. Con el tiempo,
         eso resulta ser bastante mejor de lo que suena.</p>`; } },
@@ -992,6 +1169,18 @@ const EVENTOS = [
         <p>Nadie te va a dar un aumento por antigüedad, pero tampoco te van a decir cuánto valés:
         eso lo ponés vos, y tenés que acordarte de subirlo cada vez que suben los precios,
         porque no lo va a hacer nadie por vos.</p>`; } },
+    { txt:"Ninguna de las dos. Esperar algo mejor",
+      sub:"Solo si tenés con qué bancarte los meses que vengan.",
+      hacer(){ aprender("fondo"); animo(aire() > 5 ? 2 : -9);
+        return aire() > 5
+          ? `<p>Las rechazás las dos y seguís buscando.</p>
+             <p>Podés hacer esto por una sola razón: tenés plata guardada. El colchón no te hace
+             ganar nada, te compra la posibilidad de decir que no. Es literalmente para lo que
+             sirve.</p>`
+          : `<p>Las rechazás las dos, convencido de que va a salir algo mejor.</p>
+             <p>No tenés colchón para bancar esta apuesta. Cada mes que pase sin que entre nada
+             te va a dejar en peor posición para negociar el siguiente, y las ofertas que
+             aparezcan van a ser peores, no mejores.</p>`; } },
   ]
 },
 {
@@ -1001,12 +1190,12 @@ const EVENTOS = [
   <p>En el trabajo lo dicen como si fuera una buena noticia: "por lo menos el dólar está tranquilo".</p>`,
   opciones: [
     { txt:"Comprar mientras está barato",
-      hacer(){ const c = comprarUsd(Math.max(0,S.pesos)*.6);
+      hacer(){ aprender("atrasoCamb"); const c = comprarUsd(Math.max(0,S.pesos)*.6);
         return `<p>Comprás ${usd(c)}.</p>
         <p>Cuando el dólar se queda quieto y los precios no, se está poniendo barato en serio.
         Nadie toca la campana para avisarte. Podés estar meses sintiendo que te equivocaste.</p>`; } },
     { txt:"Aprovechar para adelantar compras",
-      hacer(){ gastar(S.gastos*.7,"Compras adelantadas"); animo(4);
+      hacer(){ aprender("atrasoCamb"); gastar(S.gastos*.7,"Compras adelantadas"); animo(4);
         return `<p>Comprás cosas importadas que venías postergando.</p>
         <p>Con el dólar planchado los precios en dólares quedan baratos. Es la otra manera de
         aprovechar el atraso: gastando en lugar de guardando.</p>`; } },
@@ -1023,7 +1212,7 @@ const EVENTOS = [
   <p>Tenés ${usd(S.usd)} guardados que de golpe valen un montón de pesos.</p>`,
   opciones: [
     { txt:"Vender una parte y hacer caja",
-      hacer(){ const p = venderUsd(S.usd*.4); animo(3);
+      hacer(){ aprender("suerteHab"); const p = venderUsd(S.usd*.4); animo(3);
         return `<p>Vendés y entran ${fmt(p)}.</p>
         <p>Vender en el pico se siente genial. Vender <em>algo</em> en el pico, en vez de todo,
         es lo que hace alguien que sabe que no tiene idea de dónde está el pico.</p>`; } },
@@ -1033,7 +1222,7 @@ const EVENTOS = [
         <p>Ojo con esta sensación. El que vende todo en el pico y el que compra todo en el pico
         son la misma persona: alguien convencido de que sabe lo que viene.</p>`; } },
     { txt:"No tocar nada",
-      hacer(){ return `<p>Los dejás quietos.</p>
+      hacer(){ lograr("cabezaFria"); return `<p>Los dejás quietos.</p>
       <p>Los guardaste para cuando los necesites, no para adivinar el momento justo. Eso también
       es una estrategia, y de las más difíciles de sostener.</p>`; } },
   ]
@@ -1044,7 +1233,7 @@ const EVENTOS = [
   sumarle seguro, patente, nafta y lo que se rompa.</p>`,
   opciones: [
     { txt:"Comprarlo",
-      hacer(){ gastar(S.sueldo*7,"Auto usado"); S.gastos *= 1.16; S.flags.auto = true; animo(9);
+      hacer(){ aprender("gastoFijo"); gastar(S.sueldo*7,"Auto usado"); S.gastos *= 1.16; S.flags.auto = true; animo(9);
         return `<p>Te lo llevás un sábado.</p>
         <p>El auto no cuesta lo que pagaste: cuesta eso más todo lo que te va a salir cada mes
         para siempre. Los gastos fijos que sumás hoy los vas a estar pagando dentro de diez años.</p>`; } },
@@ -1087,12 +1276,12 @@ const EVENTOS = [
   y te come las noches.</p>`,
   opciones: [
     { txt:"Hacerlo",
-      hacer(){ gastar(S.sueldo*1.5,"Curso"); S.sueldo *= rnd(1.06,1.20); animo(-4);
+      hacer(){ aprender("capitalHum"); lograr("estudioso"); gastar(S.sueldo*1.5,"Curso"); S.sueldo *= rnd(1.06,1.20); animo(-4);
         return `<p>Seis meses sin noches libres.</p>
         <p>Termina rindiendo: lo que sabés hacer es lo único que la inflación no te puede licuar.
         Es la inversión que menos glamour tiene y más consistente resulta.</p>`; } },
     { txt:"Buscar algo gratis y hacerlo por tu cuenta",
-      hacer(){ S.sueldo *= rnd(1.00,1.09); animo(-2);
+      hacer(){ aprender("capitalHum"); lograr("estudioso"); S.sueldo *= rnd(1.00,1.09); animo(-2);
         return `<p>Arrancás con videos y documentación.</p>
         <p>Avanzás menos y más lento, pero avanzás. La mitad de lo que se paga en un curso se
         paga por la obligación de terminarlo.</p>`; } },
@@ -1108,7 +1297,7 @@ const EVENTOS = [
   <p>Entra menos de la mitad de lo normal.</p>`,
   opciones: [
     { txt:"Usar lo ahorrado y seguir",
-      hacer(){ gastar(S.gastos*.5,"Bache de ingresos");
+      hacer(){ aprender("fondo"); gastar(S.gastos*.5,"Bache de ingresos");
         return `<p>Tirás de lo que tenías guardado.</p>
         <p>Para esto era. El colchón no es plata que no rinde: es plata que hace que un mes malo
         sea solo un mes malo y no el principio de un problema.</p>`; } },
@@ -1117,6 +1306,207 @@ const EVENTOS = [
         return `<p>Agarrás dos changas mal pagas y cerrás el mes raspando.</p>
         <p>Funcionó. También te comió el tiempo que necesitabas para conseguir clientes buenos,
         que es como se hace largo un mes malo.</p>`; } },
+  ]
+},
+{
+  /* La estafa es la forma más común de perder los ahorros de años en un país
+     con inflación: cuando todo se derrite, cualquier cosa que prometa no
+     derretirse suena razonable. */
+  id:"estafa", peso:2, cond: () => S.mes > 16 && (S.pesos + S.usd*S.dolar) > S.sueldo*2,
+  texto: () => `<p>Un conocido de tu primo maneja una "mesa de inversión". Paga
+  <b>15% mensual en dólares</b>, garantizado. Hace ocho meses que viene pagando y hay gente
+  que ya cobró.</p>
+  <p>Te muestra capturas. Te dice que solo entran por recomendación.</p>`,
+  opciones: [
+    { txt:"Entrar con casi todo",
+      sub:"Si paga lo que dice, cambia tu vida.",
+      hacer(){ aprender("estafa"); aprender("suerteHab");
+        const m = Math.max(0,S.pesos)*.8 + venderUsd(S.usd*.8);
+        gastar(Math.max(0,S.pesos)*.9, "A la mesa de inversión");
+        S.golpes++;
+        if(Math.random() < .22){
+          cobrar(m*rnd(1.4,2.0), "Alcanzaste a cobrar"); animo(6);
+          return `<p>Cobrás cuatro meses. Al quinto, cuando estabas por poner más, dejan de
+          contestar.</p><p>Saliste ganando y eso es lo peor que te podía pasar, porque ahora
+          creés que la viste venir. Cobraste con la plata del que entró después de vos.</p>`; }
+        animo(-22); lograr("escarmentado");
+        return `<p>Cobrás dos meses. Al tercero el tipo "está de viaje". Al cuarto el grupo de
+        WhatsApp lo cierra un administrador.</p>
+        <p>No existía ninguna inversión. A los primeros les pagaban con la plata de los que
+        entrábamos después, y vos entraste tarde. Rendimiento alto, garantizado y sin riesgo:
+        los tres juntos nunca existen.</p>`; } },
+    { txt:"Entrar con poco, para probar",
+      sub:"Un sueldo. Lo que te bancás perder.",
+      hacer(){ aprender("tamApuesta"); aprender("estafa");
+        const m = Math.min(S.sueldo, Math.max(0,S.pesos)); gastar(m,"Prueba en la mesa");
+        S.golpes++;
+        if(Math.random() < .3){ cobrar(m*rnd(1.2,1.6),"Cobraste algo"); return `<p>Cobrás unos
+        meses y te salís antes de que se caiga.</p><p>Tuviste suerte. Que haya salido bien no
+        quiere decir que estuvo bien: el tamaño de la apuesta es lo que te salvó, no el criterio.</p>`; }
+        animo(-6); lograr("escarmentado");
+        return `<p>Se cae a los tres meses y perdés lo que pusiste.</p>
+        <p>Duele un mes y se te pasa. Eso es exactamente lo que tiene que pasar cuando apostás
+        solo lo que te bancás perder.</p>`; } },
+    { txt:"No entrar",
+      sub:"Nadie regala 15% mensual en dólares.",
+      hacer(){ aprender("estafa");
+        return `<p>Le decís que no. Durante seis meses escuchás cómo a otros les va bárbaro y
+        te sentís un poco tonto.</p>
+        <p>Al séptimo mes deja de contestar el teléfono y tu primo pierde los ahorros de cuatro
+        años. La sensación de estar perdiéndote algo es parte del negocio.</p>`; } },
+  ]
+},
+{
+  /* La red de contención del final por quiebre. Aparece con prioridad cuando el
+     ánimo se va al piso, y siempre ofrece una salida — cara, pero salida. Sin
+     esto el juego te fundía por dentro sin avisar, que es injusto y no enseña. */
+  id:"bajon", repetible:true, peso:1, cond: () => S.animo < 22,
+  texto: () => `<p>Hace semanas que arrancás cansado. Te cuesta contestar mensajes.
+  El domingo a la noche te agarra una cosa en el pecho que ya conocés.</p>
+  <p>${S.deuda > 0 ? "Y está la deuda, que no se calla nunca." : "No es un problema puntual. Es todo junto."}</p>`,
+  opciones: [
+    { txt:"Parar. Unos días afuera, como sea",
+      sub:"Cuesta plata que no te sobra.",
+      hacer(){ gastar(S.gastos*.6,"Unos días de parate"); animo(26);
+        return `<p>Cuatro días en la costa, fuera de temporada, con lo que había.</p>
+        <p>Volvés distinto. Esto no es un gasto hormiga ni una fuga: es mantenimiento. La cabeza
+        con la que tomás todas las demás decisiones también hay que pagarla.</p>`; } },
+    { txt:"Ir a terapia",
+      sub:"Un gasto fijo chico, sostenido en el tiempo.",
+      hacer(){ S.gastos *= 1.04; animo(20); S.flags.terapia = true;
+        return `<p>Empezás una vez por semana.</p>
+        <p>Sumaste un gasto fijo, que es lo que más caro sale a diez años. Es probablemente el
+        mejor que vas a sumar en toda la década.</p>`; } },
+    { txt:"Apoyarte en tu gente",
+      sub:"No cuesta plata. Cuesta pedirlo.",
+      hacer(){ animo(13);
+        return `<p>Lo hablás con dos personas. Una te escucha, la otra te viene a buscar el
+        sábado.</p><p>No arregló nada de lo material y te bajó la mitad del peso igual.</p>`; } },
+    { txt:"Aguantar. Ya va a pasar",
+      sub:"No hacer nada tiene su riesgo.",
+      hacer(){ animo(-4);
+        return `<p>Seguís como venías.</p>
+        <p>A veces pasa solo. A veces no, y lo que empezó como cansancio termina siendo algo de
+        lo que cuesta bastante más volver.</p>`; } },
+  ]
+},
+{
+  id:"robo", repetible:true, peso:1, cond: () => S.mes > 10,
+  texto: () => `<p>Dos en una moto, a media cuadra de tu casa. Te llevan el celular y la
+  mochila.</p><p>No te lastimaron. Estás temblando igual.</p>`,
+  opciones: [
+    { txt:"Reponer lo que perdiste",
+      hacer(){ gastar(S.sueldo*.7,"Reponer lo robado"); animo(-9); S.golpes++;
+        return `<p>Celular nuevo, documentos, la denuncia que no sirve para nada.</p>
+        <p>Este es el tipo de cosa que no aparece en ningún presupuesto y pasa igual. Por eso
+        el colchón no es un lujo: es lo que hace que esto sea un mal día y no un mal año.</p>`; } },
+    { txt:"Arreglarte con lo que quedó",
+      hacer(){ gastar(S.sueldo*.2,"Un celular prestado"); animo(-12); S.golpes++;
+        return `<p>Un primo te presta uno viejo. Tardás dos meses en rehacer los documentos.</p>
+        <p>Ahorraste plata y pagaste con bronca acumulada, que también es una moneda.</p>`; } },
+  ]
+},
+{
+  id:"seguro", peso:1, cond: () => S.mes > 20 && !S.flags.seguro,
+  texto: () => `<p>Te ofrecen un seguro que cubre robo, accidentes y salud, por
+  ${fmt(S.gastos*.05)} por mes.</p>
+  <p>Hacés la cuenta: en diez años son varios sueldos, y capaz no lo usás nunca.</p>`,
+  opciones: [
+    { txt:"Contratarlo",
+      sub:"Un gasto fijo chico a cambio de dormir mejor.",
+      hacer(){ aprender("seguro"); S.gastos *= 1.05; S.flags.seguro = true;
+        return `<p>Se debita solo todos los meses y te olvidás.</p>
+        <p>Un seguro tiene rendimiento esperado negativo: en promedio pagás más de lo que cobrás.
+        Y conviene igual, porque lo que te funde no es el promedio, es la vez que sale mal.</p>`; } },
+    { txt:"No, prefiero guardarme esa plata",
+      sub:"Autoasegurarte: bancarte vos el golpe.",
+      hacer(){ aprender("seguro");
+        return `<p>Le decís que no y te anotás mentalmente que vas a guardar esa plata.</p>
+        <p>Es una decisión legítima, con una condición: que de verdad tengas el colchón para
+        bancar el golpe. Si no lo tenés, no te estás autoasegurando, estás apostando.</p>`; } },
+  ]
+},
+{
+  id:"accidente", repetible:true, peso:1, cond: () => S.mes > 26,
+  texto: () => `<p>Una caída tonta bajando una escalera. Muñeca fracturada, seis semanas
+  de yeso.</p>
+  <p>${S.flags.seguro ? "Por suerte tenés el seguro." : "No tenés ningún seguro."}</p>`,
+  opciones: [
+    { txt:"Atenderte bien y parar lo que haga falta",
+      sub:"Kinesiología incluida. Sale más y se cura del todo.",
+      hacer(){
+        const costo = S.flags.seguro ? S.gastos*.1 : S.gastos*1.1;
+        gastar(costo, "Gastos médicos"); animo(-4); S.golpes++;
+        if(S.flags.freelance) gastar(S.sueldo*.5,"Mes sin poder facturar");
+        return S.flags.seguro
+          ? `<p>Pagás el coseguro y hacés toda la rehabilitación.</p>
+             <p>Acá se ve para qué era ese gasto fijo chico que venías pagando hace años sin
+             usar nunca. Un seguro se juzga el día que lo usás, no los años que lo pagás.</p>`
+          : `<p>Estudios, yeso, kinesiología. Sale bastante más de lo que pensabas.</p>
+             <p>${S.flags.freelance ? "Y como trabajás por tu cuenta, el mes que no facturás no te lo paga nadie: sos vos y tu colchón." : "Por lo menos tenés obra social por el trabajo, que te cubre una parte."}</p>`; } },
+    { txt:"Lo mínimo y volver a laburar ya",
+      sub:"No podés perder el mes.",
+      hacer(){
+        const costo = S.flags.seguro ? S.gastos*.05 : S.gastos*.4;
+        gastar(costo, "Guardia y yeso"); animo(-10); S.golpes++;
+        // Ahorrar en salud no es ahorrar: es diferir el gasto con intereses.
+        if(Math.random() < .45){
+          S.gastos *= 1.03;
+          return `<p>Volvés a las dos semanas, con el yeso puesto.</p>
+          <p>La muñeca queda mal soldada y arrastrás molestias durante años. Postergar salud es
+          el préstamo más caro que existe: la tasa se paga en cuerpo y no se puede refinanciar.</p>`; }
+        return `<p>Volvés a las dos semanas y zafás: suelda bien igual.</p>
+        <p>Salió bien. Que haya salido bien no quiere decir que era la buena apuesta — con la
+        misma decisión, casi la mitad de las veces quedás arrastrando el problema.</p>`; } },
+  ]
+},
+{
+  id:"golpe-suerte", repetible:true, peso:1, cond: () => S.mes > 18,
+  texto: () => `<p>Aparece plata que no esperabas: una devolución de impuestos mal calculada,
+  un trabajo viejo que te debía, un familiar lejano que se acordó de vos.</p>
+  <p>${fmt(S.sueldo*rnd(.8,2.2))}, más o menos.</p>`,
+  opciones: [
+    { txt:"Guardarla toda antes de acostumbrarte",
+      hacer(){ const m = S.sueldo*1.4; cobrar(m,"Plata inesperada"); S.suertes++;
+        comprarUsd(m*.8); aprender("fondo");
+        return `<p>La pasás a dólares el mismo día.</p>
+        <p>La plata que entra de golpe es la más fácil de perder: como no la tenías presupuestada,
+        no la extrañás cuando desaparece. Moverla rápido es la única defensa.</p>`; } },
+    { txt:"Gastarla en algo que venías queriendo",
+      hacer(){ cobrar(S.sueldo*1.4,"Plata inesperada"); gastar(S.sueldo*1.3,"Un gusto grande");
+        animo(13); S.suertes++;
+        return `<p>Te lo comprás sin pensarlo mucho.</p>
+        <p>Y está bien. No todo tiene que ir a la pila de ahorro; una década entera de disciplina
+        sin un solo gusto no la sostiene nadie.</p>`; } },
+    { txt:"Mitad y mitad",
+      hacer(){ const m = S.sueldo*1.4; cobrar(m,"Plata inesperada");
+        comprarUsd(m*.5); gastar(m*.45,"Un gusto"); animo(7); S.suertes++;
+        return `<p>La mitad se guarda, la mitad se disfruta.</p>
+        <p>Es la regla más aburrida y la más fácil de sostener diez años seguidos. Casi siempre
+        le gana a la estrategia brillante que abandonás en marzo.</p>`; } },
+  ]
+},
+{
+  id:"medida", repetible:true, peso:1, cond: () => S.mes > 30,
+  texto: () => `<p>Un domingo a la noche, cadena nacional. Anuncian un impuesto nuevo que
+  te pega justo donde tenés la plata.</p>
+  <p>El lunes hay cola en todos lados.</p>`,
+  opciones: [
+    { txt:"Mover todo ya, como sea",
+      hacer(){ gastar((S.pesos+S.plazo)*.04,"Costos de mover todo apurado"); animo(-5); S.golpes++;
+        aprender("liquidez");
+        return `<p>Movés todo en tres días, pagando comisiones de apuro.</p>
+        <p>Acá se paga la falta de liquidez: cuando todo el mundo quiere salir al mismo tiempo,
+        salir cuesta. La decisión que importaba era cómo estabas parado antes del anuncio.</p>`; } },
+    { txt:"Esperar a ver la letra chica",
+      hacer(){
+        if(Math.random() < .55){ animo(2);
+          return `<p>A la semana aclaran que no aplicaba a tu caso.</p>
+          <p>Los que salieron corriendo pagaron comisiones para nada. El pánico también tiene
+          costo, y lo paga el que reacciona sin leer.</p>`; }
+        gastar((S.pesos+S.plazo)*.07,"Te agarró la medida"); animo(-7); S.golpes++;
+        return `<p>Te agarró de lleno.</p><p>A veces esperar sale caro. La diferencia entre
+        prudencia y parálisis solo se ve después.</p>`; } },
   ]
 },
 {
@@ -1144,11 +1534,15 @@ let pendientes = [];    // resúmenes de meses acumulados sin escena
 const ESPERA_REPETIBLE = 20;   // meses antes de que un evento de la diaria vuelva
 
 function escenaDisponible(){
-  // 0) quedarse sin trabajo tapa cualquier otra cosa que esté pasando
-  if(!S.trabajo && S.sinTrabajo >= 2){
-    const v = EVENTOS.find(e => e.id === "volver-a-laburar");
-    const visto = S.usados[v.id];
-    if(visto == null || S.mes - visto >= 3) return v;
+  // 0) dos cosas tapan cualquier otra: quedarte sin laburo y el bajón anímico
+  const urgentes = [
+    { id:"volver-a-laburar", listo: () => !S.trabajo && S.sinTrabajo >= 2, espera: 5 },
+    { id:"bajon",            listo: () => S.animo < 22,                    espera: 5 },
+  ];
+  for(const u of urgentes){
+    if(!u.listo()) continue;
+    const visto = S.usados[u.id];
+    if(visto == null || S.mes - visto >= u.espera) return EVENTOS.find(e => e.id === u.id);
   }
   // 1) hitos, en orden
   for(const h of HITOS){
@@ -1173,10 +1567,45 @@ function escenaDisponible(){
   return null;
 }
 
+/* Tres formas de que la década se corte antes de tiempo. No son castigos por
+   jugar mal: son las cosas que de verdad terminan una etapa. Todas avisan
+   varios meses antes, así que siempre hay margen para reaccionar. */
+function finalTemprano(){
+  if(S.animoCero >= 6)
+    return { id:"quiebre", titulo:"No llegaste entero",
+      texto:`<p>No fue un mes puntual. Fue medio año en el que te costaba levantarte, y hubo
+      varias señales antes de esta.</p>
+      <p>Un día no fuiste a trabajar y no avisaste. Tu hermana te vino a buscar y te llevó a
+      la casa de tus viejos, donde te quedaste dormido doce horas.</p>
+      <p>Vas a estar bien. Pero esta década se terminó acá, y no la terminó la plata: la terminó
+      todo lo que fuiste postergando para poder ocuparte de la plata.</p>` };
+
+  if(!S.trabajo && S.sinTrabajo >= 9 && S.deuda >= limiteCredito() * .85)
+    return { id:"fondo", titulo:"Tocaste fondo",
+      texto:`<p>Diez meses sin que entre nada y una deuda que ya nadie te refinancia.</p>
+      <p>Entregás el departamento un sábado, con dos bolsos y la tele que ya casi terminabas de
+      pagar. Volvés a tu cuarto de siempre, que tu vieja no tocó.</p>
+      <p>No hubo una decisión que te trajo acá. Hubo una seguidilla de meses sin margen, y cuando
+      no hay margen las decisiones las toma la urgencia.</p>` };
+
+  if(S.mes > 24 && deudaTotal() > (S.trabajo ? S.sueldo : S.gastos) * 14
+     && patrimonio() < 0)
+    return { id:"concurso", titulo:"No daban los números",
+      texto:`<p>Te sentás con alguien que sabe y hacen la cuenta completa. Con lo que entra y lo
+      que se debe, no hay forma.</p>
+      <p>Arreglás como se puede: cuotas eternas, algo de ayuda familiar, y una vergüenza que no
+      le contás a nadie.</p>
+      <p>Lo que se llevó todo no fue un gasto grande. Fueron los intereses, que trabajan todos
+      los días y no se toman vacaciones.</p>` };
+  return null;
+}
+
 function siguiente(){
   for(;;){
     if(S.mes >= DURACION){ return pantallaFinal(); }
     avanzarMes();
+    const corte = finalTemprano();
+    if(corte){ S.finTemprano = corte; return pantallaFinal(); }
     pendientes.push(resumenMes());
     const esc = escenaDisponible();
     if(esc){ S.usados[esc.id] = S.mes; return pantallaEscena(esc); }
@@ -1189,6 +1618,10 @@ function resumenMes(){
     mes: fechaMes(), anio: fechaAnio(),
     detalle: S.detalle.slice(), avisos: S.avisos.slice(),
     infl: S.inflMes, dolar: S.dolar, neto: S.inMes - S.egMes,
+    // Cuánto se movió tu plata guardada contra cuánto se movieron los precios.
+    // El número solo no dice nada; la resta sí.
+    tasa: S.plazo > 0 ? S.ultimaTasaPF : null,
+    tcr: S.tcr,
   };
 }
 
@@ -1248,6 +1681,11 @@ function bloqueResumenes(){
       <div class="mes-linea" style="margin-top:8px">
         <span>Inflación del mes</span><span>${pct(ultima.infl)}</span></div>
       <div class="mes-linea"><span>Dólar</span><span>${fmt(ultima.dolar)}</span></div>
+      ${ultima.tasa != null ? `<div class="mes-linea">
+        <span>Tu plazo fijo rindió</span>
+        <span class="${ultima.tasa >= ultima.infl ? "pos" : "neg"}">${pct(ultima.tasa)}
+        · ${ultima.tasa >= ultima.infl ? "+" : "−"}${pct(Math.abs(ultima.tasa - ultima.infl))} real</span>
+      </div>` : ""}
       ${avisos.map(a => `<div class="aviso">${a}</div>`).join("")}
     </div>`;
 }
@@ -1256,8 +1694,10 @@ function pantallaInterludio(){
   pintarHud();
   const frases = ["Los meses tranquilos también cuentan.","No pasó nada. Eso, a veces, es una buena noticia.",
     "Rutina. Trabajo, súper, domingo.","La vida sigue, más cara que el mes pasado."];
+  const desbloq = bloqueDesbloqueos();
   $app.innerHTML = `<div class="fade">
     ${bloqueResumenes()}
+    ${desbloq}
     <p class="texto" style="color:var(--dim); font-style:italic; margin:0 0 16px">${pick(frases)}</p>
     <button class="btn" id="seguir">Seguir</button></div>`;
   pendientes = [];
@@ -1267,8 +1707,10 @@ function pantallaInterludio(){
 function pantallaEscena(esc){
   pintarHud();
   const ops = esc.opciones.filter(o => !o.cond || o.cond());
+  const desbloq = bloqueDesbloqueos();
   $app.innerHTML = `<div class="fade">
     ${bloqueResumenes()}
+    ${desbloq}
     <div class="card">
       <div class="texto serif">${esc.texto()}</div>
     </div>
@@ -1287,6 +1729,26 @@ function pantallaEscena(esc){
   });
 }
 
+/* Lo desbloqueado se muestra después de la consecuencia, nunca antes: primero
+   te pasa la cosa, y recién entonces se te nombra lo que acabás de vivir. */
+function bloqueDesbloqueos(){
+  if(!S.nuevos.length) return "";
+  const html = S.nuevos.map(d => {
+    if(d.tipo === "concepto"){
+      const c = CONCEPTOS[d.id];
+      return `<div class="desbloqueo"><span class="ico">◆</span><div>
+        <div class="cab">Aprendiste</div><div class="ttl">${c.n}</div>
+        <div class="cpo">${c.t}</div></div></div>`;
+    }
+    const l = LOGROS[d.id];
+    return `<div class="desbloqueo"><span class="ico">★</span><div>
+      <div class="cab">Logro</div><div class="ttl">${l.n}</div>
+      <div class="cpo">${l.d}.</div></div></div>`;
+  }).join("");
+  S.nuevos = [];
+  return html;
+}
+
 function pantallaConsecuencia(elegido, txt){
   pintarHud();
   $app.innerHTML = `<div class="fade">
@@ -1295,6 +1757,7 @@ function pantallaConsecuencia(elegido, txt){
       <div class="conseq serif">${txt}</div>
     </div>
     ${S.avisos.length ? S.avisos.map(a => `<div class="aviso" style="margin-bottom:14px">${a}</div>`).join("") : ""}
+    ${bloqueDesbloqueos()}
     <button class="btn" id="seguir">Seguir</button></div>`;
   S.avisos = [];
   document.getElementById("seguir").onclick = siguiente;
@@ -1314,9 +1777,18 @@ function pantallaFinal(){
   const simUsdUsd   = S.simUsd;
   const maxSim = Math.max(patrUsd, simPesosUsd, simPlazoUsd, simUsdUsd, 1);
 
+  // --- logros que solo se pueden juzgar al final ---
+  if(S.mesesEnRojo === 0) lograr("sinDeuda");
+  if(animoProm >= 75) lograr("vividor");
+  if(S.pesos > 0 && S.usd > 0 && S.plazo > 0) lograr("repartido");
+  if(S.usados["volver-a-laburar"] != null && S.deuda === 0) lograr("aguante");
+
   // epílogo según cómo llegaste
   let titulo, epilogo;
-  if(a >= 24 && animoProm >= 58){
+  if(S.finTemprano){
+    titulo = S.finTemprano.titulo;
+    epilogo = S.finTemprano.texto;
+  } else if(a >= 24 && animoProm >= 58){
     titulo = "Llegaste con aire";
     epilogo = `<p>Treinta y dos años. Si mañana se corta todo, tenés ${a.toFixed(0)} meses para
     resolverlo sin pedirle nada a nadie.</p><p>No sos rico. Sos otra cosa, que se nota menos y
@@ -1353,8 +1825,18 @@ function pantallaFinal(){
 
   const barra = v => `<div class="barra"><i style="width:${clamp(v/maxSim*100,0,100)}%"></i></div>`;
 
+  // Lo aprendido, en el orden en que fue pasando; lo que falta, como invitación.
+  const entradas = Object.entries(CONCEPTOS);
+  const aprendidos = entradas.filter(([id]) => S.conceptos[id] != null)
+                             .sort((x,y) => S.conceptos[x[0]] - S.conceptos[y[0]]);
+  const faltantes  = entradas.filter(([id]) => S.conceptos[id] == null);
+  const nAprendidos = aprendidos.length, totalConceptos = entradas.length;
+  const logrados = Object.entries(LOGROS).filter(([id]) => S.logros[id] != null);
+
   $app.innerHTML = `<div class="fade">
-    <div class="eyebrow">Diez años después · ${S.edad} años</div>
+    <div class="eyebrow">${S.finTemprano
+      ? "Año " + (Math.floor(S.mes/12)+1) + " de 10 · " + S.edad + " años"
+      : "Diez años después · " + S.edad + " años"}</div>
     <h1>${titulo}</h1>
     <div class="texto serif">${epilogo}</div>
 
@@ -1390,10 +1872,37 @@ function pantallaFinal(){
       país. Esa es la idea: si hubiera una jugada que gana siempre, no habría nada que aprender.</p>
 
     <hr class="sep">
+    <div class="eyebrow">Lo que aprendiste · ${nAprendidos} de ${totalConceptos}</div>
+    <p class="texto" style="font-size:15px; color:var(--muted); margin-bottom:12px">
+      Cada idea se desbloqueó el mes que te pasó. Las que te faltan no están escondidas:
+      aparecen si tomás otras decisiones.</p>
+    ${aprendidos.map(([id,c]) => `<div class="card concepto">
+        <div class="concepto-n">${c.n}</div>
+        <div class="concepto-t">${c.t}</div></div>`).join("")}
+    ${faltantes.length ? `<div class="card tenue">
+        <div class="eyebrow gris">Todavía no te pasaron</div>
+        <div class="pendientes">${faltantes.map(([id,c]) =>
+          `<span class="pendiente">${c.n}</span>`).join("")}</div></div>` : ""}
+
+    <hr class="sep">
+    <div class="eyebrow">Logros · ${logrados.length} de ${Object.keys(LOGROS).length}</div>
+    <div class="card">
+      ${logrados.length
+        ? logrados.map(([id,l]) => `<div class="logro"><span class="logro-tic">◆</span>
+            <span><b>${l.n}</b><span class="logro-d">${l.d}</span></span></div>`).join("")
+        : `<p class="texto" style="font-size:15px; color:var(--muted); margin:0">
+             Ninguno esta vez. Están puestos en las cosas difíciles de sostener diez años.</p>`}
+    </div>
+
+    <hr class="sep">
     <div class="eyebrow gris">Tu década</div>
     <div class="card tenue">
       ${S.historia.map(h => `<div class="mes-linea"><span>Año ${Math.floor(h.mes/12)+1}</span>
         <span style="text-align:right; color:var(--text)">${h.t}</span></div>`).join("")}
+      ${S.golpes || S.suertes ? `<div class="mes-linea" style="margin-top:8px">
+        <span>El azar</span><span style="text-align:right; color:var(--text)">
+        ${S.golpes} ${S.golpes === 1 ? "golpe" : "golpes"} y
+        ${S.suertes} ${S.suertes === 1 ? "guiñada" : "guiñadas"}</span></div>` : ""}
     </div>
 
     <button class="btn" id="otra" style="margin-top:20px">Jugar otra vida</button>

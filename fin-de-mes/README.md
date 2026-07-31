@@ -82,13 +82,39 @@ El contenido vive en dos listas al final del archivo:
 Agregar una escena nueva es agregar un objeto a una de las dos listas. Cada opción tiene
 un `hacer()` que modifica el estado y devuelve el texto de la consecuencia.
 
+## Conceptos y logros
+
+No hay tutorial ni glosario para leer al principio. Cada uno de los **16 conceptos** se
+desbloquea el mes exacto en que te pasa, y recién ahí se te nombra lo que acabás de vivir:
+la licuación aparece cuando cerrás una paritaria por debajo de la inflación, la tasa real
+el mes que tu plazo fijo rinde menos que los precios, el riesgo de contraparte cuando le
+prestás a un amigo.
+
+Al final ves cuáles te faltan. No están escondidos: aparecen si tomás otras decisiones.
+Ahí está el motivo para jugar de nuevo.
+
+Los **10 logros** están puestos en lo difícil de sostener diez años: no deber nunca, pasar
+una crisis sin endeudarte, no vender los dólares en el pico, terminar con el ánimo alto.
+
+## Formas de perder
+
+La década puede cortarse antes de los diez años, y no como castigo por jugar mal:
+
+- **Quiebre.** Si el ánimo queda en el piso medio año seguido. Siempre avisa antes con
+  escenas de bajón que ofrecen una salida — cara, pero salida.
+- **Tocar fondo.** Sin trabajo, sin crédito y sin colchón para bancar la espera.
+- **Insolvencia.** Cuando lo que debés, contando cuotas, supera lo que podés pagar.
+
+Sobre 700 partidas jugadas al azar, el 71% llega a los diez años, 19% termina en quiebre y
+9% tocando fondo. Jugando con la cabeza esos números bajan bastante.
+
 ## Estado
 
-Prototipo. La pregunta que tiene que contestar es una sola: **¿dan ganas de jugar otra
-partida?** Si la respuesta es no, nada del resto importa.
+Prototipo, 40 escenas. La pregunta que tiene que contestar es una sola: **¿dan ganas de
+jugar otra partida?** Si la respuesta es no, nada del resto importa.
 
-Falta: más contenido (hoy son unas 25 escenas), el tramo final de la década está más
-flojo que el principio, y no hay sonido ni animaciones.
+Falta: el tramo 2032-2036 sigue apoyándose más en eventos al azar que en hitos escritos,
+no hay sonido, y las escenas de pareja e hijos son más flacas que las de plata.
 
 ---
 

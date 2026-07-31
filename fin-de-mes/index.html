@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110f">
+<title>Fin de Mes</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2314110f'/><text y='72' x='50' font-size='58' text-anchor='middle' fill='%23d9a441' font-family='Georgia,serif'>$</text></svg>">
+<style>
+:root{
+  --bg:#14110f; --card:#1c1815; --card2:#221d19; --line:#302925;
+  --text:#ece5dd; --muted:#8f857a; --dim:#645b52;
+  --oro:#d9a441; --verde:#6fbf8b; --rojo:#e2726e; --azul:#7ba6d9;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; background:var(--bg); color:var(--text)}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.wrap{max-width:560px; margin:0 auto; padding:0 18px 60px}
+.serif{font-family:Georgia,"Times New Roman",serif}
+
+/* ---------- HUD ---------- */
+.hud{
+  position:sticky; top:0; z-index:20; background:rgba(20,17,15,.94);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--line);
+  padding:10px 0 9px; margin-bottom:22px;
+}
+.hud-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px}
+.fecha{font-size:12.5px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase}
+.edad{font-size:12.5px; color:var(--dim)}
+.chips{display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto; background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:5px 9px; font-size:12px; white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.chip b{font-weight:600; margin-left:4px}
+.chip .lbl{color:var(--dim); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em}
+.chip.mala b{color:var(--rojo)} .chip.buena b{color:var(--verde)} .chip.oro b{color:var(--oro)}
+
+/* ---------- barra de ánimo ---------- */
+.animo-fila{display:flex; align-items:center; gap:8px; margin-top:9px}
+.animo-lbl{font-size:10.5px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; flex:0 0 auto}
+.animo-bar{flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden}
+.animo-fill{height:100%; transition:width .5s ease, background .5s ease}
+
+/* ---------- tarjetas ---------- */
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px}
+.card.tenue{background:var(--card2); border-style:dashed}
+.eyebrow{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--oro); margin-bottom:10px}
+.eyebrow.gris{color:var(--dim)}
+h1{font-size:30px; line-height:1.15; margin:0 0 14px; font-weight:600}
+h2{font-size:19px; line-height:1.3; margin:0 0 12px; font-weight:600}
+.texto{font-size:17px; line-height:1.62; color:#ddd4ca}
+.texto p{margin:0 0 13px} .texto p:last-child{margin-bottom:0}
+.texto em{color:var(--text); font-style:italic}
+
+/* ---------- opciones ---------- */
+.ops{display:flex; flex-direction:column; gap:10px; margin-top:6px}
+.op{
+  width:100%; text-align:left; background:var(--card); color:var(--text);
+  border:1px solid var(--line); border-radius:12px; padding:15px 16px;
+  font-family:inherit; font-size:15.5px; line-height:1.45; cursor:pointer;
+  transition:border-color .15s, background .15s, transform .08s;
+}
+.op:hover{border-color:#4a4038; background:var(--card2)}
+.op:active{transform:scale(.988)}
+.op .sub{display:block; margin-top:5px; font-size:13px; color:var(--muted); line-height:1.4}
+.op[disabled]{opacity:.42; cursor:not-allowed}
+.op[disabled]:hover{border-color:var(--line); background:var(--card)}
+
+/* ---------- consecuencia ---------- */
+.conseq{border-left:2px solid var(--oro); padding-left:15px; margin:4px 0 18px; font-size:16px; line-height:1.6; color:#ddd4ca}
+.conseq p{margin:0 0 10px} .conseq p:last-child{margin-bottom:0}
+
+/* ---------- cierre de mes ---------- */
+.mes-linea{display:flex; justify-content:space-between; gap:12px; align-items:baseline; font-size:13.5px; padding:5px 0; font-variant-numeric:tabular-nums}
+.mes-linea span:first-child{color:var(--muted); flex:0 0 auto; white-space:nowrap}
+.mes-linea.total{border-top:1px solid var(--line); margin-top:6px; padding-top:9px; font-weight:600}
+.pos{color:var(--verde)} .neg{color:var(--rojo)}
+.aviso{font-size:13.5px; color:var(--oro); background:rgba(217,164,65,.07); border-radius:8px; padding:9px 12px; margin-top:10px; line-height:1.45}
+
+/* ---------- botones ---------- */
+.btn{
+  display:block; width:100%; background:var(--text); color:var(--bg); border:none;
+  border-radius:12px; padding:15px; font-family:inherit; font-size:15.5px; font-weight:600;
+  cursor:pointer; transition:opacity .15s;
+}
+.btn:hover{opacity:.88}
+.btn.ghost{background:none; color:var(--muted); border:1px solid var(--line); font-weight:500}
+.btn.ghost:hover{color:var(--text); border-color:#4a4038}
+
+/* ---------- final ---------- */
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0}
+.stat{background:var(--card2); border-radius:10px; padding:13px}
+.stat .n{font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.2}
+.stat .l{font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.3}
+.comp{display:flex; align-items:center; gap:10px; padding:9px 0; font-size:14px; border-bottom:1px solid var(--line)}
+.comp:last-child{border-bottom:none}
+.comp .nom{flex:1} .comp .val{font-variant-numeric:tabular-nums; font-weight:600}
+.comp .barra{height:5px; background:var(--line); border-radius:3px; width:78px; overflow:hidden}
+.comp .barra i{display:block; height:100%; background:var(--dim)}
+.comp.yo .nom{color:var(--oro); font-weight:600} .comp.yo .barra i{background:var(--oro)}
+
+.fade{animation:fade .32s ease}
+@keyframes fade{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
+.nota{font-size:12.5px; color:var(--dim); line-height:1.5; margin-top:20px}
+hr.sep{border:none; border-top:1px solid var(--line); margin:22px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="hud"></div>
+  <div id="app"></div>
+</div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   FIN DE MES — juego narrativo de decisiones. Una vida argentina, mes a mes.
+   Todo el estado vive en memoria; solo se persiste la partida en curso.
+   ========================================================================== */
+
+const CLAVE = "finDeMes.partida.v1";
+const MESES_NOMBRE = ["enero","febrero","marzo","abril","mayo","junio",
+                      "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DURACION = 120;            // 10 años
+const MES_INICIAL = 2;           // arranca en marzo
+const ANIO_INICIAL = 2026;
+
+/* ---------- utilidades ---------- */
+const fmt   = n => "$" + Math.round(n).toLocaleString("es-AR");
+const fmtK  = n => Math.abs(n) >= 1e6 ? "$" + (n/1e6).toFixed(1).replace(".",",") + "M" : fmt(n);
+const usd   = n => "US$" + Math.round(n).toLocaleString("es-AR");
+const pct   = n => (n*100).toFixed(1).replace(".",",") + "%";
+const rnd   = (a,b) => a + Math.random()*(b-a);
+const rndI  = (a,b) => Math.floor(rnd(a,b+1));
+const pick  = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+/* ==========================================================================
+   MACROECONOMÍA
+   El régimen está oculto. El jugador solo ve inflación del mes y precio del
+   dólar. Cada 24-40 meses se re-sortea: nadie aprende "el" régimen de memoria.
+   ========================================================================== */
+/* Cada régimen define inflación, cuánto se atrasa el dólar, con qué frecuencia
+   salta, qué tan mal le va a la paritaria y el riesgo de quedarse sin laburo.
+   `dura` son los meses que puede durar; `sale` a dónde puede derivar después.
+   La crisis es corta y siempre desemboca en otra cosa: nadie vive diez años en
+   crisis, y si el juego lo permitiera los números se irían a la hiperinflación. */
+const REGIMENES = {
+  estable: { infl:[.004,.016], dura:[18,40], atraso:[.00,.06],  pSalto:.010, salto:[.05,.12],
+             tasaPF:[1.02,1.35], parit:[.85,1.15], pDespido:.005, sale:["alta","volatil"] },
+  alta:    { infl:[.022,.045], dura:[16,32], atraso:[.02,.10],  pSalto:.045, salto:[.10,.22],
+             tasaPF:[.88,1.12],  parit:[.68,1.00], pDespido:.010, sale:["estable","volatil","crisis"] },
+  volatil: { infl:[.015,.038], dura:[12,24], atraso:[-.04,.10], pSalto:.075, salto:[.14,.30],
+             tasaPF:[.82,1.18],  parit:[.65,1.02], pDespido:.013, sale:["alta","estable","crisis"] },
+  crisis:  { infl:[.045,.085], dura:[5,12],  atraso:[-.10,.02], pSalto:.10,  salto:[.18,.38],
+             tasaPF:[.62,.92],   parit:[.55,.85], pDespido:.028, sale:["alta","estable"] },
+};
+const NOMBRES_REG = Object.keys(REGIMENES);
+const DOLAR_BASE = 1350;   // referencia para medir el atraso cambiario
+
+let S = null;   // estado de la partida
+
+function nuevaPartida(origen){
+  S = {
+    mes: 0, edad: 22,
+    origen: origen.id,
+    pesos: origen.pesos, usd: 0, plazo: 0, plazoMeses: 0, deuda: 0,
+    cuotas: [],                       // {monto, restantes, desc}
+    sueldo: origen.sueldo, gastos: origen.gastos, trabajo: origen.trabajo,
+    // Por más que te achiques, hay un piso: comer, viajar, el techo.
+    gastosPiso: origen.gastos * .55,
+    // Referencia de cuánto valía tu sueldo el primer día, en términos reales.
+    sueldoObjetivo: origen.sueldo,
+    sinTrabajo: 0,                    // meses seguidos sin laburo
+    animo: 62,
+    dolar: DOLAR_BASE, tcr: 1,        // tcr: dólar medido contra la inflación. 1 = a la par
+    ipc: 1, ipcUltimaParitaria: 1, mesesDesdeParitaria: 0,
+    regimen: pick(["estable","alta","volatil"]), mesesRegimen: rndI(14,30),
+    inflMes: .03,
+    flags: {},                        // hitos narrativos alcanzados
+    usados: {},                       // escenas ya vistas
+    // acumuladores del mes en curso
+    inMes: 0, egMes: 0, avisos: [], detalle: [],
+    // carteras sombra: mismo flujo de caja, tres estrategias distintas
+    simPesos: 0, simPlazo: 0, simUsd: 0,
+    // métricas
+    animoSuma: 0, animoN: 0, mesesEnRojo: 0, picoDeuda: 0, aporteTotal: 0,
+    historia: [],                     // decisiones tomadas, para el epílogo
+  };
+  return S;
+}
+
+/* ---------- lecturas derivadas ---------- */
+const fechaMes  = () => (MES_INICIAL + S.mes) % 12;
+const fechaAnio = () => ANIO_INICIAL + Math.floor((MES_INICIAL + S.mes) / 12);
+const patrimonio = () => S.pesos + S.usd * S.dolar + S.plazo - S.deuda;
+const cuotasMes  = () => S.cuotas.reduce((a,c) => a + c.monto, 0);
+const egresoFijo = () => S.gastos + cuotasMes();
+const aire       = () => egresoFijo() > 0 ? patrimonio() / egresoFijo() : 0;
+/* La tasa a veces le gana a la inflación y a veces no, según el momento.
+   Igual que el dólar: ninguna opción es siempre la ganadora. */
+/* Más de cinco años de aire ya no cambia nada en la práctica: el número deja de
+   ser informativo y solo infla el ego. Se muestra tope. */
+const aireTexto = a => a <= 0 ? "0" : a > 60 ? "60+" : a.toFixed(1).replace(".", ",");
+const tasaPF     = () => S.inflMes * rnd(REGIMENES[S.regimen].tasaPF[0], REGIMENES[S.regimen].tasaPF[1]);
+const tasaDeuda  = () => S.inflMes + rnd(.030,.055);        // la tarjeta siempre gana
+/* Nadie te presta infinito. El límite es lo que un banco de verdad te daría. */
+const limiteCredito = () => (S.trabajo ? S.sueldo * 2.5 : S.gastos * 1.5);
+
+/* ---------- mutadores usados por las escenas ---------- */
+function cobrar(n, desc){
+  S.pesos += n; S.inMes += n;
+  if(desc) S.detalle.push([desc, n]);
+}
+/** Gasta n. Si no alcanza la plata, el resto cae en la tarjeta — hasta el límite.
+    Pasado el límite no hay más crédito: ahí no queda otra que achicarse, que es
+    lo que pasa en la vida real cuando se te cierran las puertas. */
+function gastar(n, desc){
+  S.egMes += n;
+  if(desc) S.detalle.push([desc, -n]);
+  const disp = Math.max(0, S.pesos);
+  if(disp >= n){ S.pesos -= n; return 0; }
+
+  let falta = n - disp;
+  S.pesos = 0;
+  const margen = Math.max(0, limiteCredito() - S.deuda);
+  const aTarjeta = Math.min(falta, margen);
+  if(aTarjeta > 0){
+    S.deuda += aTarjeta;
+    S.avisos.push("No te alcanzaba: " + fmt(aTarjeta) + " quedaron en la tarjeta.");
+  }
+  const sinCubrir = falta - aTarjeta;
+  if(sinCubrir > 0){
+    // Se te acabó el crédito. Recortás para poder seguir — hasta donde se puede.
+    S.gastos = Math.max(S.gastos * .93, S.gastosPiso);
+    animo(-5);
+    S.flags.sinCredito = true;
+    S.avisos.push("Se te cortó el crédito. Tuviste que recortar el mes para poder cubrirlo.");
+  }
+  return falta;
+}
+function animo(n){ S.animo = clamp(S.animo + n, 0, 100); }
+function comprarUsd(montoPesos){
+  const efectivo = Math.min(montoPesos, Math.max(0, S.pesos));
+  if(efectivo <= 0) return 0;
+  const c = efectivo / (S.dolar * 1.02);        // spread de compra
+  S.pesos -= efectivo; S.usd += c;
+  return c;
+}
+function venderUsd(cant){
+  const c = Math.min(cant, S.usd);
+  if(c <= 0) return 0;
+  const p = c * S.dolar * 0.98;                 // spread de venta
+  S.usd -= c; S.pesos += p;
+  return p;
+}
+function ponerPlazo(monto){
+  const m = Math.min(monto, Math.max(0, S.pesos));
+  if(m <= 0) return 0;
+  S.pesos -= m; S.plazo += m; S.plazoMeses = 1;
+  return m;
+}
+function enCuotas(total, n, desc){
+  S.cuotas.push({ monto: total / n, restantes: n, desc });
+  S.egMes += 0;
+}
+function recordar(t){ S.historia.push({ mes: S.mes, t }); }
+
+/* ==========================================================================
+   EL PASO DEL MES
+   ========================================================================== */
+function avanzarMes(){
+  S.mes++;
+  if((MES_INICIAL + S.mes) % 12 === 0) S.edad++;
+  S.avisos = []; S.detalle = []; S.inMes = 0; S.egMes = 0;
+
+  // --- régimen: cambia solo, y la crisis nunca es permanente ---
+  if(--S.mesesRegimen <= 0){
+    S.regimen = pick(REGIMENES[S.regimen].sale);
+    S.mesesRegimen = rndI(REGIMENES[S.regimen].dura[0], REGIMENES[S.regimen].dura[1]);
+  }
+  const R = REGIMENES[S.regimen];
+
+  // --- inflación ---
+  S.inflMes = rnd(R.infl[0], R.infl[1]);
+  S.ipc *= (1 + S.inflMes);
+
+  /* --- dólar ---
+     A diez años el dólar empata con la inflación: no es una máquina de ganar.
+     Lo que sí hace es moverse distinto — se atrasa durante meses (y ahí el que
+     está dolarizado pierde contra los precios) y después corrige de un saque.
+     Sin esto, el juego enseñaría "comprá dólares y listo", que es mentira. */
+  let d = S.inflMes                          // sigue a los precios
+        + rnd(-.010, .010)                   // ruido
+        - (S.tcr - 1) * .050                 // vuelve a la paridad si se fue lejos
+        - rnd(R.atraso[0], R.atraso[1]) * .45; // el gobierno de turno lo pisa
+  // Cuanto más atrasado está, más fuerte corrige cuando finalmente corrige.
+  if(Math.random() < R.pSalto && S.tcr < 1.10){
+    d += rnd(R.salto[0], R.salto[1]) * (1 + Math.max(0, 1 - S.tcr) * 1.8);
+    S.avisos.push("Saltó el dólar. En una semana se movió lo que no se movía en meses.");
+  }
+  S.dolar *= (1 + d);
+  S.tcr = (S.dolar / DOLAR_BASE) / S.ipc;
+
+  // --- los gastos se ajustan TODOS los meses, el sueldo no ---
+  const ajuste = 1 + S.inflMes * rnd(.85, 1.10);
+  S.gastos *= ajuste;
+  S.gastosPiso *= ajuste;
+  S.gastos = Math.max(S.gastos, S.gastosPiso);
+
+  // --- paritaria: llega tarde y casi siempre por debajo ---
+  S.mesesDesdeParitaria++;
+  if(S.trabajo && S.mesesDesdeParitaria >= rndI(5,7)){
+    const atraso = S.ipc / S.ipcUltimaParitaria - 1;
+    const cobertura = rnd(R.parit[0], R.parit[1]);
+    const sube = atraso * cobertura;
+    S.sueldo *= (1 + sube);
+    /* Paritaria tras paritaria por debajo de la inflación, el sueldo real se
+       hundiría hasta desaparecer. En la vida real no pasa: cuando cae mucho
+       aparece la presión — gremios, mercado, gente que se va a otro lado — y
+       recupera una parte. Nunca vuelve del todo, pero no se hunde. */
+    if(S.sueldo / S.ipc < S.sueldoObjetivo * .80){
+      S.sueldo *= rnd(1.05, 1.16);
+      S.avisos.push("Se reabrió la paritaria: el sueldo había quedado muy atrás.");
+    }
+    S.ipcUltimaParitaria = S.ipc;
+    S.mesesDesdeParitaria = 0;
+    S.avisos.push("Cerró la paritaria: " + pct(sube) + " de aumento. La inflación del período fue " + pct(atraso) + ".");
+  }
+
+  /* La referencia sube cuando de verdad progresás (un ascenso, un curso, cambiar
+     de laburo) y se afloja de a poco si te quedás quieto. Es lo que hace que un
+     paso atrás en la carrera pese, sin condenarte para siempre. */
+  S.sueldoObjetivo = Math.max(S.sueldoObjetivo * .999, (S.sueldo / S.ipc) * .95);
+
+  // --- ingresos ---
+  if(S.trabajo){
+    cobrar(S.sueldo, "Sueldo");
+    S.sinTrabajo = 0;
+    const m = fechaMes();
+    if(m === 5 || m === 11) cobrar(S.sueldo / 2, "Medio aguinaldo");
+  } else {
+    S.sinTrabajo++;
+  }
+
+  // --- egresos fijos ---
+  gastar(S.gastos, "Gastos del mes");
+  if(S.cuotas.length){
+    const c = cuotasMes();
+    gastar(c, "Cuotas (" + S.cuotas.length + ")");
+    S.cuotas.forEach(x => x.restantes--);
+    const term = S.cuotas.filter(x => x.restantes <= 0);
+    term.forEach(x => S.avisos.push("Terminaste de pagar: " + x.desc + "."));
+    S.cuotas = S.cuotas.filter(x => x.restantes > 0);
+  }
+
+  // --- rendimientos y deuda ---
+  if(S.plazo > 0){ S.plazo *= (1 + tasaPF()); S.plazoMeses++; }
+  if(S.deuda > 0){
+    const i = S.deuda * tasaDeuda();
+    S.deuda += i;
+    S.detalle.push(["Intereses de la tarjeta", -i]);
+    S.egMes += i;
+    // pago automático si hay con qué: primero la deuda cara
+    if(S.pesos > S.deuda){ S.pesos -= S.deuda; S.avisos.push("Cancelaste la tarjeta: " + fmt(S.deuda) + "."); S.deuda = 0; }
+    else if(S.pesos > 0 && S.deuda > S.gastos * 2){
+      const p = S.pesos * .5; S.pesos -= p; S.deuda -= p;
+      S.avisos.push("Pagaste " + fmt(p) + " de tarjeta para que no siga creciendo.");
+    }
+    // Si el saldo pasa el límite, el banco te refinancia: sale del rojo de la
+    // tarjeta y entra como cuota fija durante dos años. Alivia hoy, pesa después.
+    const lim = limiteCredito();
+    if(S.deuda > lim){
+      const exceso = S.deuda - lim;
+      S.deuda = lim;
+      S.cuotas.push({ monto: exceso / 24, restantes: 24, desc: "Refinanciación de tarjeta" });
+      animo(-4);
+      S.avisos.push("Te refinanciaron " + fmt(exceso) + " de tarjeta en 24 cuotas. Ya no te dan más crédito.");
+    }
+  }
+  S.picoDeuda = Math.max(S.picoDeuda, S.deuda);
+  if(S.deuda > 0) S.mesesEnRojo++;
+
+  /* --- ánimo ---
+     Baja sola cuando no hay margen y sube sola cuando lo hay, pero despacio:
+     lo que de verdad la mueve son las decisiones. Si el desgaste pasivo pesara
+     más que lo que elegís, daría lo mismo elegir. */
+  const a = aire();
+  animo(a < 0 ? -2.6 : a < 1 ? -1.1 : a < 3 ? -.15 : .45);
+  if(S.deuda > S.sueldo) animo(-1.1);
+  if(!S.trabajo) animo(-2.2);
+  S.animoSuma += S.animo; S.animoN++;
+
+  // --- despido aleatorio ---
+  if(S.trabajo && S.mes > 8 && Math.random() < R.pDespido){
+    S.trabajo = null;
+    S.avisos.push("Te desvincularon. Te pagan una indemnización y a partir del mes que viene no entra más nada.");
+    cobrar(S.sueldo * rndI(2,5), "Indemnización");
+    animo(-9);
+  }
+
+  // --- carteras sombra: MISMO flujo de caja, tres estrategias ---
+  const neto = S.inMes - S.egMes;
+  S.aporteTotal += Math.max(0, neto);
+  S.simPesos += neto;
+  S.simPlazo = S.simPlazo * (1 + tasaPF()) + neto;
+  S.simUsd += neto / S.dolar;
+
+  guardar();
+}
+
+/* ==========================================================================
+   CONTENIDO
+   Regla de oro: ninguna opción es "la correcta". Ahorrar todo también cuesta.
+   ========================================================================== */
+
+/* Las tres puertas de entrada. Lo que cambia de verdad no es el sueldo: es
+   cuánto te sobra a fin de mes. Arriba se ahorra como un 30%, abajo un 8%, que
+   es la diferencia entre elegir y aguantar. */
+const ORIGENES = [
+  { id:"casa", titulo:"En casa de tus viejos",
+    sub:"No pagás alquiler. Sí pagás la culpa de que te lo recuerden.",
+    pesos:120000, sueldo:840000, gastos:590000, trabajo:"Atención al cliente" },
+  { id:"compartido", titulo:"Un depto compartido en Almagro",
+    sub:"Dos compañeros, un baño, y el alquiler que sube cada seis meses.",
+    pesos:180000, sueldo:910000, gastos:765000, trabajo:"Administrativo en una PyME" },
+  { id:"solo", titulo:"Solo, y te bancás todo",
+    sub:"Nadie te ayuda si el mes se pone feo. Difícil.",
+    pesos:240000, sueldo:1050000, gastos:960000, trabajo:"Vendedor con comisiones" },
+];
+
+/* ---------- HITOS: se disparan en orden, en el mes indicado ---------- */
+const HITOS = [
+{
+  id:"primer-sueldo", mes:1,
+  texto: () => `<p>Cae el sueldo un jueves a la mañana. Mirás el homebanking tres veces por
+  las dudas, como si el número se pudiera arrepentir.</p>
+  <p>Tu vieja dice que guardes. Tu amigo dice que te lo ganaste. Los dos tienen razón
+  y eso es lo molesto.</p>`,
+  opciones: [
+    { txt:"Guardar la mitad y no tocarla",
+      sub:"Sin plan todavía. Solo no gastarla.",
+      hacer(){ animo(-2); recordar("Guardó desde el primer sueldo");
+        return `<p>No hacés nada con la plata. Queda ahí, en la caja de ahorro, quieta.</p>
+        <p>Se siente responsable. Ya vas a ver que quedarse quieto, acá, también es una decisión.</p>`; } },
+    { txt:"Darte un gusto grande, uno solo",
+      sub:"Unas zapatillas que mirás hace meses. " + fmt(160000) + ".",
+      hacer(){ gastar(160000,"Zapatillas"); animo(7); recordar("Se dio el gusto con el primer sueldo");
+        return `<p>Te las ponés esa misma noche para ir a ningún lado.</p>
+        <p>Hay una alegría honesta en el primer gasto que te pagaste vos. No todo se mide en aire.</p>`; } },
+    { txt:"Invitar a tus viejos a comer",
+      sub:"Pagás vos. " + fmt(95000) + ".",
+      hacer(){ gastar(95000,"Cena con tus viejos"); animo(9); S.flags.buenHijo = true;
+        recordar("Invitó a los viejos con el primer sueldo");
+        return `<p>Tu viejo intenta sacar la tarjeta por reflejo. Le decís que no con la mano.</p>
+        <p>Se queda callado un segundo y después habla de otra cosa. Fue lo más parecido a un abrazo
+        que te va a dar en años.</p>`; } },
+  ]
+},
+{
+  id:"tarjeta", mes:3,
+  texto: () => `<p>Te llaman del banco. "Te tenemos preaprobada una tarjeta de crédito con
+  un límite de ${fmt(S.sueldo*1.5)}."</p>
+  <p>La chica lo dice como si te estuviera regalando algo.</p>`,
+  opciones: [
+    { txt:"Aceptarla y usarla con cabeza",
+      sub:"Una herramienta. Depende de vos.",
+      hacer(){ S.flags.tarjeta = true; recordar("Sacó la tarjeta");
+        return `<p>Llega en un sobre a la semana.</p>
+        <p>En un país donde todo sube, pagar dentro de treinta días es pagar más barato.
+        En un país donde todo sube, también es facilísimo perder la cuenta.</p>`; } },
+    { txt:"Aceptarla y estrenarla ya",
+      sub:"Algo te vas a comprar igual.",
+      hacer(){ S.flags.tarjeta = true; enCuotas(340000, 6, "Compra a 6 cuotas"); animo(5);
+        recordar("Estrenó la tarjeta en seis cuotas");
+        return `<p>Seis cuotas de ${fmt(340000/6)}. Suena a nada.</p>
+        <p>Suena a nada ahora. En el resumen del mes que viene va a estar, y en el otro, y en el otro.</p>`; } },
+    { txt:"No, gracias",
+      sub:"Si no la tenés, no la usás.",
+      hacer(){ animo(-1); recordar("Rechazó la tarjeta");
+        return `<p>La chica insiste dos veces y después te deja ir.</p>
+        <p>Es una decisión defendible. También te deja afuera de las cuotas sin interés, que en
+        este país son de las pocas cosas que juegan a favor.</p>`; } },
+  ]
+},
+{
+  id:"primer-dolar", mes:8,
+  texto: () => `<p>Sobremesa. Alguien tira el tema y no se habla de otra cosa: el dólar está
+  a ${fmt(S.dolar)}.</p>
+  <p>Uno jura que se va a las nubes. Otro jura que está caro y va a bajar. Los dos hablan
+  con la misma seguridad.</p>`,
+  opciones: [
+    { txt:"Comprar todo lo que puedas",
+      sub:"Pasar los pesos a dólares y dormir tranquilo.",
+      hacer(){ const c = comprarUsd(S.pesos); recordar("Se dolarizó entero a los ocho meses");
+        return `<p>Comprás ${usd(c)}.</p>
+        <p>Dormís mejor esa noche. Con el tiempo vas a descubrir que hay meses en que el dólar
+        se queda quieto y todo lo demás sube igual: dolarizarse no es gratis, es elegir un riesgo
+        en lugar de otro.</p>`; } },
+    { txt:"Comprar una parte, dejar el resto en pesos",
+      sub:"La mitad y la mitad.",
+      hacer(){ const c = comprarUsd(S.pesos*.5); recordar("Se dolarizó a medias");
+        return `<p>Comprás ${usd(c)} y dejás el resto disponible.</p>
+        <p>No vas a ganar la charla de sobremesa con esta estrategia. Nadie cuenta anécdotas
+        sobre el que hizo la mitad de cada cosa.</p>`; } },
+    { txt:"Plazo fijo, que algo rinde",
+      sub:"Tasa en pesos, a treinta días.",
+      hacer(){ const m = ponerPlazo(S.pesos*.8); recordar("Hizo su primer plazo fijo");
+        return `<p>Ponés ${fmt(m)} a treinta días.</p>
+        <p>La tasa se ve linda escrita. Después vas a comparar cuánto rindió contra cuánto
+        subieron las cosas, y ahí la conversación va a ser otra.</p>`; } },
+    { txt:"Nada. No entendés y no querés meter la pata",
+      sub:"Dejar la plata donde está.",
+      hacer(){ animo(-1); recordar("No hizo nada con el tema del dólar");
+        return `<p>Te quedás callado el resto de la sobremesa.</p>
+        <p>No hacer nada es cómodo porque no se siente como una decisión. Lo es. Y en un país
+        con inflación, es de las que más caro salen.</p>`; } },
+  ]
+},
+{
+  id:"aumento-corto", mes:13,
+  texto: () => `<p>Te llama tu jefe. Aumento del ${pct(rnd(.09,.14))} "por el esfuerzo del año".</p>
+  <p>Hacés la cuenta mientras él habla. En el año que pasó, todo subió bastante más que eso.</p>`,
+  opciones: [
+    { txt:"Agradecer y seguir",
+      sub:"No es momento de hacer olas.",
+      hacer(){ animo(-4); recordar("Se comió un aumento por debajo de la inflación");
+        return `<p>Le decís gracias. Él dice que se lo peleó con recursos humanos.</p>
+        <p>Capaz es cierto. Igual, tu sueldo real es más chico que el año pasado, y eso no lo
+        arregla la buena onda.</p>`; } },
+    { txt:"Pedir más, con números",
+      sub:"Llevar la cuenta hecha. Puede salir mal.",
+      hacer(){
+        if(Math.random() < .45){ S.sueldo *= 1.09; animo(4); recordar("Negoció el aumento y le fue bien");
+          return `<p>Le mostrás los números. Se incomoda, pide una semana, y vuelve con un poco más.</p>
+          <p>Nadie te va a ofrecer lo que no pedís. Es incómodo una vez y rinde todos los meses.</p>`; }
+        animo(-6); S.flags.rocecJefe = true; recordar("Pidió aumento y se lo negaron");
+        return `<p>Te dice que "no hay presupuesto" con una cara que da a entender que sí hay,
+        pero no para vos.</p><p>Quedás marcado como el que pide. A veces sale así. No por eso
+        estuvo mal pedir.</p>`; } },
+    { txt:"Empezar a mirar afuera, sin decir nada",
+      sub:"Actualizar el currículum en silencio.",
+      hacer(){ S.flags.buscando = true; recordar("Empezó a buscar en silencio");
+        return `<p>Actualizás el perfil un domingo a la noche.</p>
+        <p>En este país el aumento más grande casi nunca te lo da tu empresa. Te lo da la que
+        te viene a buscar.</p>`; } },
+  ]
+},
+{
+  id:"laburo-nuevo", mes:20, cond: () => !!S.trabajo,
+  texto: () => `<p>Te escribe una reclutadora. Otra empresa, más grande, más quilombo,
+  ${pct(rnd(.28,.45))} más de sueldo.</p>
+  <p>Donde estás te tratan bien y ya sabés cómo funciona todo.</p>`,
+  opciones: [
+    { txt:"Aceptar",
+      sub:"Más plata, más presión.",
+      hacer(){ S.sueldo *= rnd(1.30,1.45); S.trabajo = "Analista"; animo(-3);
+        S.mesesDesdeParitaria = 0; S.ipcUltimaParitaria = S.ipc; recordar("Cambió de trabajo por más plata");
+        return `<p>Renunciás un martes. Tu jefe te dice que la puerta queda abierta.</p>
+        <p>El sueldo nuevo entra completo y se siente enorme. Los primeros meses vas a laburar
+        más de lo que esperabas.</p>`; } },
+    { txt:"Usarla para negociar donde estás",
+      sub:"Contarlo y ver qué pasa.",
+      hacer(){
+        if(Math.random() < .5){ S.sueldo *= rnd(1.15,1.25); animo(2); recordar("Usó la oferta para negociar y funcionó");
+          return `<p>Te igualan una parte. Te quedás.</p><p>Funcionó. Sabelo: solo funciona una vez,
+          y desde ahora saben que estás mirando.</p>`; }
+        animo(-5); recordar("Quiso negociar con una oferta y le salió mal");
+        return `<p>Te dicen que "así no se hacen las cosas".</p>
+        <p>Se enfrió todo. Y la otra empresa, mientras tanto, ya llamó a otra persona.</p>`; } },
+    { txt:"Quedarte donde estás",
+      sub:"Lo conocido tiene su valor.",
+      hacer(){ animo(3); recordar("Eligió la estabilidad sobre el aumento");
+        return `<p>Le decís que no, con amabilidad.</p>
+        <p>Hay una tranquilidad real en no empezar de cero. Cuesta plata, y a veces vale la pena.
+        A veces.</p>`; } },
+  ]
+},
+{
+  id:"viaje", mes:29,
+  texto: () => `<p>El grupo se está organizando. Diez días, en enero, todos juntos.
+  Sale como ${fmt(S.sueldo*1.8)} por cabeza.</p>
+  <p>Vos hacés la cuenta de lo que tenés y de lo que se te viene.</p>`,
+  opciones: [
+    { txt:"Ir. Se va a poder",
+      sub:"Pagarlo como salga.",
+      hacer(){ gastar(S.sueldo*1.8,"Viaje con amigos"); animo(16); S.flags.viajo = true;
+        recordar("Se fue de viaje con los amigos");
+        return `<p>Te vas.</p>
+        <p>Y es una de esas cosas que a los cuarenta seguís contando. La plata que te gastás
+        en tu gente rara vez es la que te arrepentís de haber gastado.</p>`; } },
+    { txt:"Ir, pero en doce cuotas",
+      sub:"Cuota fija en pesos. Con inflación, se licúa.",
+      hacer(){ enCuotas(S.sueldo*1.9, 12, "Viaje en 12 cuotas"); animo(14); S.flags.viajo = true;
+        recordar("Financió el viaje a doce cuotas");
+        return `<p>Doce cuotas fijas de ${fmt(S.sueldo*1.9/12)}.</p>
+        <p>Acá pasa algo raro y a favor: la cuota no se mueve mientras todo lo demás sube. Dentro
+        de un año esa cuota va a ser plata chica. Es de las pocas veces que la inflación juega
+        para tu lado — siempre que no acumules cinco de estas.</p>`; } },
+    { txt:"No ir",
+      sub:"No es el momento.",
+      hacer(){ animo(-11); recordar("Se bancó no ir al viaje");
+        return `<p>Decís que no podés y cambiás de tema rápido.</p>
+        <p>Después ves las fotos. Y está bien haber cuidado la plata, pero que no te digan que
+        no dolió: la prudencia también se paga, solo que en otra moneda.</p>`; } },
+  ]
+},
+{
+  id:"despido", mes:40,
+  texto: () => `<p>Reunión de quince minutos un miércoles. Reestructuración. No es personal,
+  dicen, como si eso ayudara.</p>
+  <p>Tenés ${aire() > 0 ? aire().toFixed(1).replace(".",",") : "0"} meses de aire con lo que hay guardado.</p>`,
+  opciones: [
+    { txt:"Tomarte un tiempo y buscar bien",
+      sub:"Requiere colchón. Si no lo tenés, se pone feo.",
+      hacer(){ S.trabajo = null; animo(aire() > 4 ? -2 : -12); recordar("Se quedó sin trabajo y se tomó tiempo");
+        return aire() > 4
+          ? `<p>Te tomás las mañanas para buscar en serio y las tardes para respirar.</p>
+             <p>Esto lo estás pudiendo hacer por una sola razón: hay plata guardada. El colchón
+             no sirve para ganar. Sirve para no tener que aceptar la primera cosa que aparezca.</p>`
+          : `<p>A la segunda semana ya estás haciendo cuentas de cuánto aguantás.</p>
+             <p>No tenés colchón, así que no estás eligiendo: estás esperando. Es una diferencia
+             enorme y se siente en el cuerpo.</p>`; } },
+    { txt:"Agarrar lo primero que aparezca",
+      sub:"Menos plata, pero entra algo ya.",
+      hacer(){ S.sueldo *= rnd(.72,.88); S.trabajo = "Lo que apareció"; animo(-7);
+        S.mesesDesdeParitaria = 0; S.ipcUltimaParitaria = S.ipc; recordar("Agarró el primer trabajo que apareció");
+        return `<p>En tres semanas estás trabajando otra vez, por menos plata y en algo que no elegiste.</p>
+        <p>Es una decisión razonable. También es la decisión que toma alguien que no tiene margen
+        para tomar otra.</p>`; } },
+    { txt:"Arrancar por tu cuenta",
+      sub:"Freelance. Irregular y sin red.",
+      hacer(){ S.trabajo = "Freelance"; S.sueldo *= rnd(.55,1.25); S.flags.freelance = true;
+        animo(-1); S.mesesDesdeParitaria = 0; S.ipcUltimaParitaria = S.ipc;
+        recordar("Se puso por su cuenta después del despido");
+        return `<p>Le escribís a todos los que conocés. Dos te contestan.</p>
+        <p>Los meses buenos son mejores que el sueldo. Los malos no existían cuando eras empleado.
+        El promedio no te dice nada: lo que importa es si podés bancar los malos.</p>`; } },
+  ]
+},
+{
+  id:"pareja", mes:52,
+  texto: () => `<p>Hace rato que están. Aparece la conversación de vivir juntos y con ella
+  la otra, la que nadie quiere tener: cómo se maneja la plata.</p>`,
+  opciones: [
+    { txt:"Todo junto, una sola caja",
+      sub:"Confianza total.",
+      hacer(){ S.flags.pareja = "junta"; S.gastos *= .78; S.gastosPiso *= .78; animo(8);
+        recordar("Se mudó con su pareja y juntaron todo");
+        return `<p>Se mudan. Compartir gastos les baja el costo de vida a los dos de golpe.</p>
+        <p>Vivir de a dos es la mejora financiera más grande que va a tener cualquiera de los dos
+        en años. Nadie lo cuenta así, pero es así.</p>`; } },
+    { txt:"Cuentas separadas y una común para lo de la casa",
+      sub:"Cada uno lo suyo, más un pozo.",
+      hacer(){ S.flags.pareja = "mixta"; S.gastos *= .82; S.gastosPiso *= .82; animo(6);
+        recordar("Se mudó con su pareja con cuentas separadas");
+        return `<p>Arman una cuenta común para alquiler y súper. El resto, cada uno.</p>
+        <p>Es el arreglo que menos discusiones genera y el que más fácil se sostiene cuando los
+        sueldos son distintos.</p>`; } },
+    { txt:"Todavía no",
+      sub:"Cada uno donde está.",
+      hacer(){ animo(-4); recordar("Todavía no se mudó con su pareja");
+        return `<p>Lo dejan para más adelante.</p>
+        <p>Ella lo entiende o dice que lo entiende. Los dos siguen pagando dos alquileres.</p>`; } },
+  ]
+},
+{
+  id:"oportunidad", mes:76,
+  texto: () => `<p>Un conocido te ofrece entrar en algo suyo. Necesita ${fmt(S.sueldo*4)} y
+  te ofrece una parte.</p>
+  <p>Te muestra números en una servilleta. Los números cierran, como cierran siempre los
+  números en una servilleta.</p>`,
+  opciones: [
+    { txt:"Entrar con todo lo que puedas",
+      sub:"Si sale, sale grande.",
+      hacer(){ const m = Math.min(S.sueldo*4, Math.max(0,S.pesos)); gastar(m,"Inversión en el negocio");
+        const suerte = Math.random();
+        if(suerte < .28){ cobrar(m*rnd(2.2,4.5),"Le fue bien al negocio"); animo(12);
+          recordar("Puso plata en el negocio de un conocido y le fue bien");
+          return `<p>Contra todo pronóstico, funciona.</p><p>Te llevás bastante más de lo que pusiste.
+          Ojo con la lectura: salió bien, pero eso no quiere decir que la decisión fuera buena.
+          Con esos números, la mayoría de las veces perdés.</p>`; }
+        if(suerte < .62){ cobrar(m*rnd(.3,.8),"Recuperaste parte"); animo(-8);
+          recordar("Puso plata en un negocio y recuperó una parte");
+          return `<p>El negocio arranca, cojea, y a los ocho meses cierra sin drama.</p>
+          <p>Recuperás una parte. Tu conocido te sigue saludando, que es más de lo que pasa
+          en la mayoría de estas historias.</p>`; }
+        animo(-14); recordar("Perdió plata en el negocio de un conocido");
+        return `<p>Deja de contestar los mensajes en marzo.</p>
+        <p>Perdiste la plata y el conocido. Lo que dolió no fue el monto: fue que era plata que
+        te había costado años juntar.</p>`; } },
+    { txt:"Entrar con poco, lo que te bancás perder",
+      sub:"Un mes de sueldo, no más.",
+      hacer(){ const m = Math.min(S.sueldo, Math.max(0,S.pesos)); gastar(m,"Inversión chica");
+        if(Math.random() < .3){ cobrar(m*rnd(2,4),"Rindió la apuesta chica"); animo(6); }
+        else animo(-2);
+        recordar("Entró con poco en el negocio de un conocido");
+        return `<p>Ponés lo que te bancás perder y te olvidás.</p>
+        <p>Esta es la forma adulta de apostar: el tamaño de la apuesta importa más que la apuesta.
+        Si sale, buenísimo. Si no sale, tu vida no cambia.</p>`; } },
+    { txt:"No entrar",
+      sub:"No entendés el negocio.",
+      hacer(){ recordar("No entró en el negocio del conocido");
+        return `<p>Le decís que no. Se nota que le molesta un poco.</p>
+        <p>No meterse en lo que uno no entiende es una regla aburrida que le ahorró a mucha gente
+        una cantidad enorme de plata y de amigos.</p>`; } },
+  ]
+},
+];
+
+/* ---------- EVENTOS: bolsa aleatoria, condicionados por el estado ---------- */
+const EVENTOS = [
+{
+  id:"heladera", peso:1, repetible:true,
+  texto: () => `<p>La heladera hace un ruido raro tres días y después no hace ningún ruido,
+  que es peor.</p><p>Una nueva sale ${fmt(S.gastos*1.4)}.</p>`,
+  opciones: [
+    { txt:"Comprarla en doce cuotas sin interés",
+      hacer(){ enCuotas(S.gastos*1.4, 12, "Heladera");
+        return `<p>Llega el sábado.</p><p>Doce cuotas fijas mientras todo sube: en un año esa cuota
+        va a valer la mitad. Las cuotas sin interés no son una trampa, son una herramienta.
+        La trampa es tener seis al mismo tiempo.</p>`; } },
+    { txt:"Pagarla al contado",
+      hacer(){ const f = gastar(S.gastos*1.25,"Heladera al contado");
+        return `<p>Conseguís un descuento por pago contado.</p>
+        <p>${f > 0 ? "Aunque terminó en la tarjeta igual, y ahí el descuento se lo come el interés."
+        : "Te sacás el tema de encima y no arrastrás cuotas. Cuesta más hoy, pesa menos mañana."}</p>`; } },
+    { txt:"Aguantar con una prestada",
+      hacer(){ animo(-6); return `<p>Un vecino te presta una chiquita que anda a medias.</p>
+      <p>Aguantás tres meses comprando comida día por día, que sale más caro y cansa más.
+      Ahorrar sin margen a veces es solo pagar de otra forma.</p>`; } },
+  ]
+},
+{
+  id:"alquiler", repetible:true, peso:1, cond: () => S.origen !== "casa",
+  texto: () => `<p>Mensaje del dueño. Actualización del alquiler: ${pct(rnd(.22,.48))} más
+  a partir del mes que viene.</p>`,
+  opciones: [
+    { txt:"Aceptar y seguir ahí",
+      hacer(){ S.gastos *= rnd(1.12,1.22); animo(-3);
+        return `<p>Contestás "ok, gracias" y cerrás el chat.</p>
+        <p>Tus gastos fijos acaban de subir de golpe. El sueldo se entera dentro de cinco meses,
+        con suerte.</p>`; } },
+    { txt:"Negociar",
+      hacer(){ if(Math.random() < .45){ S.gastos *= rnd(1.05,1.10);
+          return `<p>Le decís que sos buen inquilino y que no querés mudarte. Baja un poco.</p>
+          <p>Al dueño le conviene: buscar inquilino nuevo también le cuesta.</p>`; }
+        S.gastos *= rnd(1.14,1.24); animo(-4);
+        return `<p>No afloja. Dice que "está por debajo de mercado".</p><p>Aceptás igual.</p>`; } },
+    { txt:"Mudarte a algo más barato",
+      hacer(){ gastar(S.gastos*1.6,"Mudanza, depósito y comisión"); S.gastos *= .84; S.gastosPiso *= .84; animo(-7);
+        return `<p>Mudarse cuesta: depósito, comisión, flete, y dos fines de semana de tu vida.</p>
+        <p>Pero te bajás el gasto fijo para siempre. Los gastos fijos son los que te ahogan; un
+        gasto grande de una vez casi nunca es el problema.</p>`; } },
+  ]
+},
+{
+  id:"cripto", repetible:true, peso:1,
+  texto: () => `<p>Un amigo la pegó. Muestra la pantalla en el asado, con el número en verde,
+  y todos se acercan a mirar.</p><p>Dice que todavía estás a tiempo.</p>`,
+  opciones: [
+    { txt:"Poner una parte grande",
+      hacer(){ const m = Math.max(0,S.pesos)*.4; gastar(m,"Cripto");
+        const r = Math.random();
+        if(r < .3){ cobrar(m*rnd(1.8,3.2),"Cripto: salió"); animo(9);
+          return `<p>Sube. Vendés y te sentís un genio.</p><p>No lo sos. Tuviste suerte, y la
+          diferencia importa muchísimo para la próxima vez.</p>`; }
+        if(r < .55){ cobrar(m*rnd(.9,1.3),"Cripto: quedó igual");
+          return `<p>Sube, baja, y a los cuatro meses está más o menos donde entraste.</p>
+          <p>Miraste el precio todos los días para nada.</p>`; }
+        cobrar(m*rnd(.15,.55),"Cripto: perdiste"); animo(-10);
+        return `<p>Baja un 40% en una semana y no vuelve.</p>
+        <p>Tu amigo dejó de mostrar la pantalla en los asados. Nadie cuenta la parte en que pierde.</p>`; } },
+    { txt:"Poner algo chico, por curiosidad",
+      hacer(){ const m = Math.min(S.sueldo*.25, Math.max(0,S.pesos)); gastar(m,"Cripto (poco)");
+        cobrar(m*rnd(.3,2.4),"Resultado cripto");
+        return `<p>Ponés poco y mirás qué pasa.</p><p>Aprendés cómo funciona sin arriesgar nada
+        que te importe. Es la manera más barata de entender algo.</p>`; } },
+    { txt:"Nada",
+      hacer(){ return `<p>Asentís con la cabeza y agarrás otro chorizo.</p>
+      <p>Te vas a perder la próxima que la pegue. También te vas a perder las tres que no.</p>`; } },
+  ]
+},
+{
+  id:"casamiento", repetible:true, peso:1,
+  texto: () => `<p>Se casa un amigo de toda la vida. Hay que poner para el regalo,
+  y hay que ir vestido de algo.</p><p>Entre una cosa y la otra, ${fmt(S.sueldo*.35)}.</p>`,
+  opciones: [
+    { txt:"Poner sin hacer drama",
+      hacer(){ gastar(S.sueldo*.35,"Casamiento"); animo(6);
+        return `<p>Vas, te reís, volvés a las seis de la mañana.</p>
+        <p>Hay gastos que no se discuten. Presupuestarlos en vez de sufrirlos es la diferencia
+        entre disfrutarlo y contarlo con culpa.</p>`; } },
+    { txt:"Poner lo mínimo",
+      hacer(){ gastar(S.sueldo*.15,"Casamiento (lo mínimo)"); animo(1);
+        return `<p>Ponés lo que podés y vas con lo que tenés en el placard.</p>
+        <p>Nadie se dio cuenta. Nunca se dan cuenta.</p>`; } },
+  ]
+},
+{
+  id:"cuotas-tv", repetible:true, peso:1, cond: () => S.flags.tarjeta,
+  texto: () => `<p>Doce cuotas sin interés en un televisor de ${fmt(S.sueldo*.9)}.
+  El que tenés anda perfecto.</p>`,
+  opciones: [
+    { txt:"Comprarlo. Con inflación, la cuota se licúa",
+      hacer(){ enCuotas(S.sueldo*.9, 12, "Televisor"); animo(5);
+        return `<p>Lo colgás el domingo.</p><p>El razonamiento de la licuación es correcto.
+        Ojo con el otro razonamiento, el que viene gratis con él: "total, es una cuota más".
+        Así es como se juntan seis.</p>`; } },
+    { txt:"No lo necesitás",
+      hacer(){ return `<p>Cerrás la pestaña.</p><p>El mejor descuento sigue siendo el ciento por
+      ciento: no comprarlo.</p>`; } },
+  ]
+},
+{
+  id:"prestamo-amigo", repetible:true, peso:1,
+  texto: () => `<p>Te escribe un amigo. Está complicado, necesita ${fmt(S.sueldo*.6)} y
+  te promete devolverlo el mes que viene.</p><p>Nunca te pidió nada.</p>`,
+  opciones: [
+    { txt:"Prestarle",
+      hacer(){ gastar(S.sueldo*.6,"Préstamo a un amigo");
+        if(Math.random() < .5){ cobrar(S.sueldo*.6,"Te devolvió"); animo(5);
+          return `<p>Te devuelve. Tarde, pero te devuelve.</p><p>Y te lo agradece de una forma
+          que te da un poco de vergüenza.</p>`; }
+        animo(-5); return `<p>Pasan los meses. No vuelve a aparecer el tema y vos no lo sacás.</p>
+        <p>Prestá siempre pensando que capaz no vuelve. Si con eso estás bien, prestá.</p>`; } },
+    { txt:"Darle menos, y de regalo",
+      hacer(){ gastar(S.sueldo*.25,"Ayuda a un amigo"); animo(3);
+        return `<p>Le mandás menos y le decís que no te lo devuelva.</p>
+        <p>Es más barato que prestar y no rompe la amistad. Casi siempre es la mejor versión
+        de este favor.</p>`; } },
+    { txt:"Decirle que no podés",
+      hacer(){ animo(-4); return `<p>Le explicás. Te dice "no pasa nada, tranqui".</p>
+      <p>Queda algo raro un tiempo. Se pasa.</p>`; } },
+  ]
+},
+{
+  id:"bono", repetible:true, peso:1, cond: () => !!S.trabajo,
+  texto: () => `<p>Bono por objetivos: ${fmt(S.sueldo*1.2)} que no esperabas.</p>`,
+  opciones: [
+    { txt:"A dólares, íntegro",
+      hacer(){ cobrar(S.sueldo*1.2,"Bono"); const c = comprarUsd(S.sueldo*1.2);
+        return `<p>Comprás ${usd(c)} el mismo día que te cae.</p>
+        <p>La plata que entra de golpe es la más fácil de perder: no la tenías presupuestada,
+        así que no la extrañás cuando desaparece.</p>`; } },
+    { txt:"Mitad guardar, mitad disfrutar",
+      hacer(){ cobrar(S.sueldo*1.2,"Bono"); comprarUsd(S.sueldo*.6); gastar(S.sueldo*.6,"Gustos"); animo(8);
+        return `<p>Guardás la mitad y la otra mitad te la gastás sin culpa.</p>
+        <p>Esta regla, aplicada durante diez años, le gana a casi cualquier estrategia sofisticada
+        que no puedas sostener.</p>`; } },
+    { txt:"Cancelar deuda",
+      cond: () => S.deuda > 0,
+      hacer(){ cobrar(S.sueldo*1.2,"Bono"); const p = Math.min(S.deuda, S.sueldo*1.2);
+        S.pesos -= p; S.deuda -= p; animo(4);
+        return `<p>Cancelás ${fmt(p)} de deuda.</p>
+        <p>No se siente como ganar plata, pero lo es: pagar una deuda que te cobra 5% mensual
+        rinde más que cualquier inversión que te vayan a ofrecer.</p>`; } },
+  ]
+},
+{
+  id:"salud", repetible:true, peso:1,
+  texto: () => `<p>Una muela. Duele desde el jueves y ya no se puede seguir postergando.</p>
+  <p>El tratamiento sale ${fmt(S.gastos*.8)}.</p>`,
+  opciones: [
+    { txt:"Hacerlo ya",
+      hacer(){ gastar(S.gastos*.8,"Dentista"); animo(2);
+        return `<p>Dos sesiones y listo.</p><p>Postergar salud es el préstamo más caro que existe:
+        la tasa se paga en cuerpo.</p>`; } },
+    { txt:"Aguantar con ibuprofeno",
+      hacer(){ animo(-8);
+        return `<p>Aguantás cuatro meses.</p><p>Cuando finalmente vas, es un tratamiento más largo
+        y más caro. Casi siempre pasa esto.</p>`; } },
+  ]
+},
+{
+  id:"freelance", repetible:true, peso:1, cond: () => !!S.trabajo,
+  texto: () => `<p>Te ofrecen un laburo por afuera, pagado en dólares. Son tres meses de
+  fines de semana ocupados.</p>`,
+  opciones: [
+    { txt:"Agarrarlo",
+      hacer(){ S.usd += rnd(600,1400); animo(-6); S.flags.dolarizado = true;
+        return `<p>Tres meses sin sábados.</p><p>Cobrás en dólares, que en este país es otro
+        deporte: tu ingreso deja de derretirse solo. Pagaste con tiempo y con cansancio.</p>`; } },
+    { txt:"No. Necesitás descansar",
+      hacer(){ animo(5);
+        return `<p>Decís que no y te quedás con tus fines de semana.</p>
+        <p>El descanso no aparece en ninguna planilla, y es lo que sostiene todo lo demás.</p>`; } },
+  ]
+},
+{
+  id:"super", repetible:true, peso:2,
+  texto: () => `<p>Caja del súper. El total te sorprende y no de la buena manera.
+  Compraste lo mismo de siempre.</p>`,
+  opciones: [
+    { txt:"Empezar a comprar distinto",
+      hacer(){ S.gastos = Math.max(S.gastos * .95, S.gastosPiso); animo(-2);
+        return `<p>Segunda marca, mercado de barrio, mayorista una vez por mes.</p>
+        <p>Bajás el gasto fijo un poco. Cuesta tiempo y cuesta ganas, que también son recursos.</p>`; } },
+    { txt:"Seguir igual",
+      hacer(){ return `<p>Pagás y salís.</p>
+      <p>La inflación no se siente cuando llega. Se siente tres meses después, en la caja.</p>`; } },
+  ]
+},
+{
+  id:"celular", repetible:true, peso:1,
+  texto: () => `<p>Se te cae el celular y esta vez no zafó.</p>`,
+  opciones: [
+    { txt:"Uno nuevo, en cuotas",
+      hacer(){ enCuotas(S.sueldo*.8, 12, "Celular"); return `<p>Doce cuotas más en la lista.</p>
+      <p>Fijate cuántas cuotas estás pagando en total. Es el número que a nadie le gusta mirar.</p>`; } },
+    { txt:"Uno usado, barato",
+      hacer(){ gastar(S.sueldo*.25,"Celular usado"); animo(-2);
+        return `<p>Anda bien. La cámara es peor y no te importa tanto como creías.</p>`; } },
+  ]
+},
+{
+  id:"plazo-vs-dolar", repetible:true, peso:1, cond: () => S.pesos > S.gastos*2,
+  texto: () => `<p>Tenés ${fmt(S.pesos)} parados en la cuenta. El dólar está a ${fmt(S.dolar)}
+  y el plazo fijo paga ${pct(tasaPF())} al mes.</p>
+  <p>Los pesos quietos pierden todos los días. Eso no es opinión.</p>`,
+  opciones: [
+    { txt:"Plazo fijo",
+      hacer(){ const m = ponerPlazo(S.pesos*.8);
+        return `<p>Ponés ${fmt(m)} a treinta días.</p><p>Si la tasa le gana a la inflación, ganaste.
+        Casi nunca le gana. Pero pierde bastante menos que quedarse quieto.</p>`; } },
+    { txt:"Dólares",
+      hacer(){ const c = comprarUsd(S.pesos*.8);
+        return `<p>Comprás ${usd(c)}.</p><p>Dejás de perder contra la inflación y empezás a
+        depender de otra cosa: que el dólar acompañe. Es cambiar de riesgo, no sacárselo.</p>`; } },
+    { txt:"Repartir entre los dos",
+      hacer(){ const m = ponerPlazo(S.pesos*.4); const c = comprarUsd(S.pesos*.65);
+        return `<p>${fmt(m)} a plazo fijo y ${usd(c)} en dólares.</p>
+        <p>No vas a ganar en ningún escenario. Tampoco vas a perder feo en ninguno. Con el tiempo,
+        eso resulta ser bastante mejor de lo que suena.</p>`; } },
+    { txt:"Dejarlos donde están",
+      hacer(){ return `<p>Los dejás.</p><p>Es la opción más elegida y la que más caro sale.
+      No decidir es decidir perder de a poco.</p>`; } },
+  ]
+},
+{
+  id:"tarifas", repetible:true, peso:1,
+  texto: () => `<p>Llegan las boletas. Luz, gas, expensas: todas más caras de lo que esperabas,
+  todas el mismo mes.</p>`,
+  opciones: [
+    { txt:"Pagar y reacomodar el mes",
+      hacer(){ gastar(S.gastos*.35,"Boletas"); S.gastos *= 1.03;
+        return `<p>Pagás todo y el mes queda ajustado.</p>
+        <p>Los servicios son gastos fijos que suben solos. Es el tipo de aumento que no se nota
+        hasta que ya está adentro del presupuesto.</p>`; } },
+    { txt:"Pagar algunas y patear el resto",
+      hacer(){ gastar(S.gastos*.18,"Boletas (parte)"); S.deuda += S.gastos*.2; animo(-3);
+        return `<p>Pagás las que cortan el servicio y pateás el resto.</p>
+        <p>Con recargo. Patear una boleta es tomar un préstamo carísimo sin firmar nada.</p>`; } },
+  ]
+},
+{
+  /* Sin esta escena, un despido te dejaba sin trabajo para siempre. Se dispara
+     con prioridad sobre todo lo demás cuando hace un par de meses que no entra
+     nada. El sueldo que conseguís no es el viejo actualizado: es lo que paga el
+     mercado hoy, que es una diferencia que se siente. */
+  id:"volver-a-laburar", repetible:true, peso:1, cond: () => !S.trabajo && S.sinTrabajo >= 2,
+  texto: () => `<p>${S.sinTrabajo} ${S.sinTrabajo === 1 ? "mes" : "meses"} sin que entre nada.
+  Mandaste currículums y fuiste a algunas entrevistas.</p>
+  <p>Aparecen dos cosas al mismo tiempo.</p>`,
+  opciones: [
+    { txt:"Un puesto en relación de dependencia",
+      sub:"Estable, sueldo de mercado, empezás el lunes.",
+      hacer(){
+        const castigo = clamp(1 - S.sinTrabajo * .02, .70, 1);   // cuanto más tardás, peor pagan
+        S.sueldo = S.sueldoObjetivo * S.ipc * rnd(.80, 1.05) * castigo;
+        S.trabajo = "En relación de dependencia";
+        S.ipcUltimaParitaria = S.ipc; S.mesesDesdeParitaria = 0;
+        S.sinTrabajo = 0; animo(11);
+        return `<p>Arrancás el lunes. Sueldo de ${fmt(S.sueldo)}.</p>
+        <p>Fijate el número: no es tu viejo sueldo actualizado, es lo que se paga hoy. Cuando
+        estás afuera, la inflación te corre el precio de tu propio trabajo y volvés a empezar
+        desde donde está el mercado, no desde donde estabas vos.</p>`; } },
+    { txt:"Salir a buscar clientes por tu cuenta",
+      sub:"Ingreso irregular. Meses buenos y meses de nada.",
+      hacer(){
+        S.sueldo = S.sueldoObjetivo * S.ipc * rnd(.65, 1.20);
+        S.trabajo = "Por mi cuenta"; S.flags.freelance = true;
+        S.ipcUltimaParitaria = S.ipc; S.mesesDesdeParitaria = 0;
+        S.sinTrabajo = 0; animo(4);
+        return `<p>Le escribís a todos los que conocés. Dos te contestan.</p>
+        <p>Nadie te va a dar un aumento por antigüedad, pero tampoco te van a decir cuánto valés:
+        eso lo ponés vos, y tenés que acordarte de subirlo cada vez que suben los precios,
+        porque no lo va a hacer nadie por vos.</p>`; } },
+  ]
+},
+{
+  id:"dolar-barato", repetible:true, peso:2, cond: () => S.tcr < .86,
+  texto: () => `<p>Hace meses que el dólar no se mueve. Está a ${fmt(S.dolar)} y todo lo demás
+  subió bastante más que eso.</p>
+  <p>En el trabajo lo dicen como si fuera una buena noticia: "por lo menos el dólar está tranquilo".</p>`,
+  opciones: [
+    { txt:"Comprar mientras está barato",
+      hacer(){ const c = comprarUsd(Math.max(0,S.pesos)*.6);
+        return `<p>Comprás ${usd(c)}.</p>
+        <p>Cuando el dólar se queda quieto y los precios no, se está poniendo barato en serio.
+        Nadie toca la campana para avisarte. Podés estar meses sintiendo que te equivocaste.</p>`; } },
+    { txt:"Aprovechar para adelantar compras",
+      hacer(){ gastar(S.gastos*.7,"Compras adelantadas"); animo(4);
+        return `<p>Comprás cosas importadas que venías postergando.</p>
+        <p>Con el dólar planchado los precios en dólares quedan baratos. Es la otra manera de
+        aprovechar el atraso: gastando en lugar de guardando.</p>`; } },
+    { txt:"Nada, capaz esta vez sigue así",
+      hacer(){ return `<p>Lo dejás pasar.</p>
+      <p>A veces sigue así un año y tenés razón. El problema es que cuando se corta, se corta en
+      una semana y ya no hay tiempo de reaccionar.</p>`; } },
+  ]
+},
+{
+  id:"dolar-caro", repetible:true, peso:2, cond: () => S.tcr > 1.14 && S.usd > 100,
+  texto: () => `<p>Saltó todo. El dólar está a ${fmt(S.dolar)} y en el grupo de WhatsApp
+  no se habla de otra cosa.</p>
+  <p>Tenés ${usd(S.usd)} guardados que de golpe valen un montón de pesos.</p>`,
+  opciones: [
+    { txt:"Vender una parte y hacer caja",
+      hacer(){ const p = venderUsd(S.usd*.4); animo(3);
+        return `<p>Vendés y entran ${fmt(p)}.</p>
+        <p>Vender en el pico se siente genial. Vender <em>algo</em> en el pico, en vez de todo,
+        es lo que hace alguien que sabe que no tiene idea de dónde está el pico.</p>`; } },
+    { txt:"Vender todo, no se va a poner mejor",
+      hacer(){ const p = venderUsd(S.usd); animo(5);
+        return `<p>Vendés todo. Entran ${fmt(p)} y te sentís vivísimo.</p>
+        <p>Ojo con esta sensación. El que vende todo en el pico y el que compra todo en el pico
+        son la misma persona: alguien convencido de que sabe lo que viene.</p>`; } },
+    { txt:"No tocar nada",
+      hacer(){ return `<p>Los dejás quietos.</p>
+      <p>Los guardaste para cuando los necesites, no para adivinar el momento justo. Eso también
+      es una estrategia, y de las más difíciles de sostener.</p>`; } },
+  ]
+},
+{
+  id:"auto", peso:1, cond: () => !S.flags.auto && S.mes > 30,
+  texto: () => `<p>Aparece la posibilidad de un auto usado. ${fmt(S.sueldo*7)}, y hay que
+  sumarle seguro, patente, nafta y lo que se rompa.</p>`,
+  opciones: [
+    { txt:"Comprarlo",
+      hacer(){ gastar(S.sueldo*7,"Auto usado"); S.gastos *= 1.16; S.flags.auto = true; animo(9);
+        return `<p>Te lo llevás un sábado.</p>
+        <p>El auto no cuesta lo que pagaste: cuesta eso más todo lo que te va a salir cada mes
+        para siempre. Los gastos fijos que sumás hoy los vas a estar pagando dentro de diez años.</p>`; } },
+    { txt:"Financiarlo",
+      hacer(){ enCuotas(S.sueldo*8.5, 36, "Auto en cuotas"); S.gastos *= 1.16; S.flags.auto = true; animo(8);
+        return `<p>Treinta y seis cuotas.</p>
+        <p>Con inflación alta las cuotas fijas se licúan y esto puede salirte muy bien. Con
+        inflación baja, no. Es una apuesta a que el país siga siendo el que es.</p>`; } },
+    { txt:"Seguir sin auto",
+      hacer(){ animo(-3);
+        return `<p>Seguís con el bondi y el subte.</p>
+        <p>Es la decisión financieramente correcta y la que menos ganas dan de tomar.
+        No siempre gana la correcta, y está bien que así sea.</p>`; } },
+  ]
+},
+{
+  id:"viejos", repetible:true, peso:1, cond: () => S.mes > 45,
+  texto: () => `<p>Tu vieja te cuenta, como al pasar, que este mes no le cierra.</p>
+  <p>No te pide nada. Justamente por eso.</p>`,
+  opciones: [
+    { txt:"Ayudarla todos los meses",
+      hacer(){ S.gastos += S.sueldo*.12; animo(7); S.flags.ayudaViejos = true;
+        return `<p>Le mandás una parte fija todos los meses y le decís que no lo discuta.</p>
+        <p>Acabás de sumar un gasto fijo importante. También acabás de hacer una de las
+        pocas cosas de esta lista de las que no te vas a arrepentir nunca.</p>`; } },
+    { txt:"Darle una mano ahora",
+      hacer(){ gastar(S.sueldo*.35,"Ayuda a tu vieja"); animo(4);
+        return `<p>Le pasás plata este mes y quedan en que avise si vuelve a pasar.</p>
+        <p>No avisa. Nunca avisan.</p>`; } },
+    { txt:"No podés",
+      hacer(){ animo(-7);
+        return `<p>Le decís que estás justo. Es verdad, y igual te queda dando vueltas.</p>
+        <p>Esta es la parte que las apps de finanzas no cuentan: la plata que te falta casi nunca
+        es solo tuya.</p>`; } },
+  ]
+},
+{
+  id:"curso", repetible:true, peso:1, cond: () => !!S.trabajo,
+  texto: () => `<p>Un curso de seis meses que te abriría puertas. Sale ${fmt(S.sueldo*1.5)}
+  y te come las noches.</p>`,
+  opciones: [
+    { txt:"Hacerlo",
+      hacer(){ gastar(S.sueldo*1.5,"Curso"); S.sueldo *= rnd(1.06,1.20); animo(-4);
+        return `<p>Seis meses sin noches libres.</p>
+        <p>Termina rindiendo: lo que sabés hacer es lo único que la inflación no te puede licuar.
+        Es la inversión que menos glamour tiene y más consistente resulta.</p>`; } },
+    { txt:"Buscar algo gratis y hacerlo por tu cuenta",
+      hacer(){ S.sueldo *= rnd(1.00,1.09); animo(-2);
+        return `<p>Arrancás con videos y documentación.</p>
+        <p>Avanzás menos y más lento, pero avanzás. La mitad de lo que se paga en un curso se
+        paga por la obligación de terminarlo.</p>`; } },
+    { txt:"Dejarlo pasar",
+      hacer(){ animo(1);
+        return `<p>Lo archivás para más adelante.</p><p>Más adelante es un lugar al que no
+        llega casi nada.</p>`; } },
+    ]
+},
+{
+  id:"mes-flojo", repetible:true, peso:2, cond: () => S.flags.freelance && !!S.trabajo,
+  texto: () => `<p>Mes flojo. Un cliente pateó el pago y otro directamente desapareció.</p>
+  <p>Entra menos de la mitad de lo normal.</p>`,
+  opciones: [
+    { txt:"Usar lo ahorrado y seguir",
+      hacer(){ gastar(S.gastos*.5,"Bache de ingresos");
+        return `<p>Tirás de lo que tenías guardado.</p>
+        <p>Para esto era. El colchón no es plata que no rinde: es plata que hace que un mes malo
+        sea solo un mes malo y no el principio de un problema.</p>`; } },
+    { txt:"Salir a buscar lo que sea",
+      hacer(){ cobrar(S.sueldo*.4,"Changas"); animo(-6);
+        return `<p>Agarrás dos changas mal pagas y cerrás el mes raspando.</p>
+        <p>Funcionó. También te comió el tiempo que necesitabas para conseguir clientes buenos,
+        que es como se hace largo un mes malo.</p>`; } },
+  ]
+},
+{
+  id:"vender-cosas", repetible:true, peso:1, cond: () => S.mes > 24,
+  texto: () => `<p>Mirás el placard y el balcón. Hay cosas que no usás hace años.</p>`,
+  opciones: [
+    { txt:"Vender todo lo que no usás",
+      hacer(){ cobrar(S.sueldo*rnd(.2,.5),"Venta de usados"); animo(2);
+        return `<p>Dos fines de semana de fotos, mensajes y gente que pregunta y no viene.</p>
+        <p>Entra algo de plata y se libera espacio. No te va a cambiar la vida, pero es de las
+        pocas veces que recuperás algo de lo que gastaste.</p>`; } },
+    { txt:"Regalarlo",
+      hacer(){ animo(4);
+        return `<p>Llenás dos bolsas y las llevás a una parroquia del barrio.</p>
+        <p>No entra un peso y salís de ahí mejor que si hubieras vendido todo.</p>`; } },
+  ]
+},
+];
+
+/* ==========================================================================
+   MOTOR DE JUEGO
+   ========================================================================== */
+let pendientes = [];    // resúmenes de meses acumulados sin escena
+
+const ESPERA_REPETIBLE = 20;   // meses antes de que un evento de la diaria vuelva
+
+function escenaDisponible(){
+  // 0) quedarse sin trabajo tapa cualquier otra cosa que esté pasando
+  if(!S.trabajo && S.sinTrabajo >= 2){
+    const v = EVENTOS.find(e => e.id === "volver-a-laburar");
+    const visto = S.usados[v.id];
+    if(visto == null || S.mes - visto >= 3) return v;
+  }
+  // 1) hitos, en orden
+  for(const h of HITOS){
+    if(S.usados[h.id] != null) continue;
+    if(S.mes < h.mes) continue;
+    if(h.cond && !h.cond()) continue;
+    return h;
+  }
+  // 2) eventos al azar
+  if(Math.random() < .55){
+    const elegibles = EVENTOS.filter(e => {
+      const visto = S.usados[e.id];
+      if(visto != null && !(e.repetible && S.mes - visto >= ESPERA_REPETIBLE)) return false;
+      return !e.cond || e.cond();
+    });
+    if(elegibles.length){
+      const bolsa = [];
+      elegibles.forEach(e => { for(let i = 0; i < (e.peso || 1); i++) bolsa.push(e); });
+      return pick(bolsa);
+    }
+  }
+  return null;
+}
+
+function siguiente(){
+  for(;;){
+    if(S.mes >= DURACION){ return pantallaFinal(); }
+    avanzarMes();
+    pendientes.push(resumenMes());
+    const esc = escenaDisponible();
+    if(esc){ S.usados[esc.id] = S.mes; return pantallaEscena(esc); }
+    if(pendientes.length >= 3) return pantallaInterludio();
+  }
+}
+
+function resumenMes(){
+  return {
+    mes: fechaMes(), anio: fechaAnio(),
+    detalle: S.detalle.slice(), avisos: S.avisos.slice(),
+    infl: S.inflMes, dolar: S.dolar, neto: S.inMes - S.egMes,
+  };
+}
+
+/* ==========================================================================
+   RENDER
+   ========================================================================== */
+const $app = document.getElementById("app");
+const $hud = document.getElementById("hud");
+
+function pintarHud(){
+  if(!S){ $hud.innerHTML = ""; return; }
+  const a = aire();
+  const claseAire = a < 3 ? "mala" : a >= 12 ? "buena" : "";
+  const colorAnimo = S.animo < 30 ? "var(--rojo)" : S.animo < 60 ? "var(--oro)" : "var(--verde)";
+  $hud.innerHTML = `
+    <div class="hud">
+      <div class="hud-top">
+        <span class="fecha">${MESES_NOMBRE[fechaMes()]} ${fechaAnio()}</span>
+        <span class="edad">${S.edad} años · ${S.trabajo || "sin trabajo"}</span>
+      </div>
+      <div class="chips">
+        <span class="chip"><span class="lbl">Pesos</span><b>${fmtK(S.pesos)}</b></span>
+        ${S.usd > 0 ? `<span class="chip oro"><span class="lbl">Dólares</span><b>${usd(S.usd)}</b></span>` : ""}
+        ${S.plazo > 0 ? `<span class="chip"><span class="lbl">Plazo fijo</span><b>${fmtK(S.plazo)}</b></span>` : ""}
+        ${S.deuda > 0 ? `<span class="chip mala"><span class="lbl">Deuda</span><b>${fmtK(S.deuda)}</b></span>` : ""}
+        ${S.cuotas.length ? `<span class="chip"><span class="lbl">Cuotas</span><b>${S.cuotas.length}</b></span>` : ""}
+        <span class="chip ${claseAire}"><span class="lbl">Aire</span><b>${aireTexto(a)} m</b></span>
+      </div>
+      <div class="animo-fila">
+        <span class="animo-lbl">Ánimo</span>
+        <div class="animo-bar"><div class="animo-fill" style="width:${S.animo}%; background:${colorAnimo}"></div></div>
+      </div>
+    </div>`;
+}
+
+function bloqueResumenes(){
+  if(!pendientes.length) return "";
+  const filas = [];
+  pendientes.forEach(r => {
+    const nombre = MESES_NOMBRE[r.mes] + " " + String(r.anio).slice(2);
+    r.detalle.forEach(([d,v]) => filas.push(
+      `<div class="mes-linea"><span>${nombre} · ${d}</span>
+       <span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : "−"}${fmt(Math.abs(v))}</span></div>`));
+  });
+  const neto = pendientes.reduce((a,r) => a + r.neto, 0);
+  const ultima = pendientes[pendientes.length - 1];
+  const avisos = pendientes.flatMap(r => r.avisos);
+  const rotulo = pendientes.length === 1
+    ? MESES_NOMBRE[ultima.mes] + " de " + ultima.anio
+    : "Pasaron " + pendientes.length + " meses";
+  return `
+    <div class="card tenue">
+      <div class="eyebrow gris">${rotulo}</div>
+      ${filas.join("")}
+      <div class="mes-linea total"><span>Te quedó</span>
+        <span class="${neto >= 0 ? "pos" : "neg"}">${neto >= 0 ? "+" : "−"}${fmt(Math.abs(neto))}</span></div>
+      <div class="mes-linea" style="margin-top:8px">
+        <span>Inflación del mes</span><span>${pct(ultima.infl)}</span></div>
+      <div class="mes-linea"><span>Dólar</span><span>${fmt(ultima.dolar)}</span></div>
+      ${avisos.map(a => `<div class="aviso">${a}</div>`).join("")}
+    </div>`;
+}
+
+function pantallaInterludio(){
+  pintarHud();
+  const frases = ["Los meses tranquilos también cuentan.","No pasó nada. Eso, a veces, es una buena noticia.",
+    "Rutina. Trabajo, súper, domingo.","La vida sigue, más cara que el mes pasado."];
+  $app.innerHTML = `<div class="fade">
+    ${bloqueResumenes()}
+    <p class="texto" style="color:var(--dim); font-style:italic; margin:0 0 16px">${pick(frases)}</p>
+    <button class="btn" id="seguir">Seguir</button></div>`;
+  pendientes = [];
+  document.getElementById("seguir").onclick = siguiente;
+}
+
+function pantallaEscena(esc){
+  pintarHud();
+  const ops = esc.opciones.filter(o => !o.cond || o.cond());
+  $app.innerHTML = `<div class="fade">
+    ${bloqueResumenes()}
+    <div class="card">
+      <div class="texto serif">${esc.texto()}</div>
+    </div>
+    <div class="ops">
+      ${ops.map((o,i) => `<button class="op" data-i="${i}">${o.txt}
+        ${o.sub ? `<span class="sub">${o.sub}</span>` : ""}</button>`).join("")}
+    </div></div>`;
+  pendientes = [];
+  $app.querySelectorAll(".op").forEach(b => {
+    b.onclick = () => {
+      const o = ops[+b.dataset.i];
+      const txt = o.hacer() || "";
+      guardar();
+      pantallaConsecuencia(o.txt, txt);
+    };
+  });
+}
+
+function pantallaConsecuencia(elegido, txt){
+  pintarHud();
+  $app.innerHTML = `<div class="fade">
+    <div class="card">
+      <div class="eyebrow">Elegiste: ${elegido.toLowerCase()}</div>
+      <div class="conseq serif">${txt}</div>
+    </div>
+    ${S.avisos.length ? S.avisos.map(a => `<div class="aviso" style="margin-bottom:14px">${a}</div>`).join("") : ""}
+    <button class="btn" id="seguir">Seguir</button></div>`;
+  S.avisos = [];
+  document.getElementById("seguir").onclick = siguiente;
+}
+
+/* ==========================================================================
+   FINAL
+   ========================================================================== */
+function pantallaFinal(){
+  $hud.innerHTML = "";   // la partida terminó: los números del HUD ya no dicen nada
+  const patrUsd  = patrimonio() / S.dolar;
+  const a        = aire();
+  const animoProm = S.animoN ? S.animoSuma / S.animoN : 50;
+
+  const simPesosUsd = S.simPesos / S.dolar;
+  const simPlazoUsd = S.simPlazo / S.dolar;
+  const simUsdUsd   = S.simUsd;
+  const maxSim = Math.max(patrUsd, simPesosUsd, simPlazoUsd, simUsdUsd, 1);
+
+  // epílogo según cómo llegaste
+  let titulo, epilogo;
+  if(a >= 24 && animoProm >= 58){
+    titulo = "Llegaste con aire";
+    epilogo = `<p>Treinta y dos años. Si mañana se corta todo, tenés ${a.toFixed(0)} meses para
+    resolverlo sin pedirle nada a nadie.</p><p>No sos rico. Sos otra cosa, que se nota menos y
+    vale más: sos alguien que puede decir que no.</p>`;
+  } else if(a >= 24){
+    titulo = "Llegaste con plata y cansado";
+    // El motivo del desgaste cambia según cómo fue la década: no es lo mismo
+    // haberla pasado mal debiendo que haberla pasado mal privándose.
+    epilogo = S.mesesEnRojo > 24
+      ? `<p>Los números cerraron: ${a.toFixed(0)} meses de aire, más de lo que tiene casi todo
+         el mundo.</p><p>Pero fueron ${S.mesesEnRojo} meses con una deuda encima. Ese ruido de
+         fondo, el de revisar el resumen antes de dormir, no aparece en ninguna planilla y te
+         estuvo cobrando todos los días.</p>`
+      : `<p>Los números cerraron: ${a.toFixed(0)} meses de aire, más de lo que tiene casi todo
+         el mundo.</p><p>Pero mirá para atrás y fijate cuántas veces dijiste "ahora no". La plata
+         era para algo. Guardarla no era el objetivo, era el medio, y en algún momento de esta
+         década se te dieron vuelta los dos.</p>`;
+  } else if(a >= 9){
+    titulo = "Llegaste parado";
+    epilogo = `<p>No es una fortuna, pero tenés ${a.toFixed(1).replace(".",",")} meses de aire y
+    ninguna deuda que te desvele.</p><p>Es más de lo que suena. La mayoría de la gente termina
+    esta década sin margen ninguno.</p>`;
+  } else if(S.deuda > S.sueldo * 3){
+    titulo = "Llegaste debiendo";
+    epilogo = `<p>Debés ${fmt(S.deuda)}, que son varios sueldos tuyos.</p>
+    <p>No pasó de golpe. Fue un mes que no cerró, y después otro, y el interés haciendo lo suyo
+    en silencio. La deuda cara es lo único que crece más rápido que la inflación.</p>`;
+  } else {
+    titulo = "Llegaste justo";
+    epilogo = `<p>Vas mes a mes. Si se rompe algo grande, no sabés de dónde sale.</p>
+    <p>No te fue mal, exactamente. Es que nunca hubo margen, y sin margen todas las decisiones
+    las toma la urgencia.</p>`;
+  }
+
+  const barra = v => `<div class="barra"><i style="width:${clamp(v/maxSim*100,0,100)}%"></i></div>`;
+
+  $app.innerHTML = `<div class="fade">
+    <div class="eyebrow">Diez años después · ${S.edad} años</div>
+    <h1>${titulo}</h1>
+    <div class="texto serif">${epilogo}</div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="n" style="color:${a<3?"var(--rojo)":a>=12?"var(--verde)":"var(--oro)"}">
+        ${aireTexto(a)}</div>
+        <div class="l">meses de aire<br>(cuánto aguantás sin ingresos)</div></div>
+      <div class="stat"><div class="n">${usd(patrUsd)}</div>
+        <div class="l">patrimonio, medido en dólares</div></div>
+      <div class="stat"><div class="n">${Math.round(animoProm)}</div>
+        <div class="l">ánimo promedio de la década</div></div>
+      <div class="stat"><div class="n" style="color:${S.mesesEnRojo>24?"var(--rojo)":"inherit"}">
+        ${S.mesesEnRojo}</div><div class="l">meses con deuda encima</div></div>
+    </div>
+
+    <hr class="sep">
+    <div class="eyebrow">Con tu mismo flujo de plata</div>
+    <p class="texto" style="font-size:15px; color:var(--muted); margin-bottom:12px">
+      Todo lo que te sobró cada mes, si en lugar de lo que hiciste lo hubieras puesto siempre
+      en el mismo lugar. Mismo sueldo, mismos gastos, mismas decisiones de vida.</p>
+    <div class="card">
+      <div class="comp yo"><span class="nom">Lo que hiciste vos</span>${barra(patrUsd)}
+        <span class="val">${usd(patrUsd)}</span></div>
+      <div class="comp"><span class="nom">Todo en pesos, quieto</span>${barra(simPesosUsd)}
+        <span class="val">${usd(simPesosUsd)}</span></div>
+      <div class="comp"><span class="nom">Todo a plazo fijo</span>${barra(simPlazoUsd)}
+        <span class="val">${usd(simPlazoUsd)}</span></div>
+      <div class="comp"><span class="nom">Todo a dólares</span>${barra(simUsdUsd)}
+        <span class="val">${usd(simUsdUsd)}</span></div>
+    </div>
+    <p class="nota">Te tocó un país con estos regímenes: la inflación acumulada de la década fue
+      ${pct(S.ipc - 1)} y el dólar pasó de $1.350 a ${fmt(S.dolar)}. En otra partida te toca otro
+      país. Esa es la idea: si hubiera una jugada que gana siempre, no habría nada que aprender.</p>
+
+    <hr class="sep">
+    <div class="eyebrow gris">Tu década</div>
+    <div class="card tenue">
+      ${S.historia.map(h => `<div class="mes-linea"><span>Año ${Math.floor(h.mes/12)+1}</span>
+        <span style="text-align:right; color:var(--text)">${h.t}</span></div>`).join("")}
+    </div>
+
+    <button class="btn" id="otra" style="margin-top:20px">Jugar otra vida</button>
+    <p class="nota">Esto es un juego. Los números son verosímiles, no son un pronóstico,
+      y nada de acá es asesoramiento financiero.</p>
+  </div>`;
+  localStorage.removeItem(CLAVE);
+  document.getElementById("otra").onclick = pantallaInicio;
+}
+
+/* ==========================================================================
+   INICIO
+   ========================================================================== */
+function pantallaInicio(){
+  S = null; pendientes = []; pintarHud();
+  const guardada = localStorage.getItem(CLAVE);
+  $app.innerHTML = `<div class="fade" style="padding-top:44px">
+    <div class="eyebrow">Un juego de decisiones</div>
+    <h1 class="serif">Fin de Mes</h1>
+    <div class="texto serif" style="margin-bottom:26px">
+      <p>Tenés veintidós años y acabás de conseguir tu primer trabajo en blanco.</p>
+      <p>Lo que sigue son diez años: sueldos que llegan tarde, precios que llegan temprano,
+      y un montón de decisiones chicas que de a una no parecen nada.</p>
+      <p><em>No hay respuestas correctas. Hay consecuencias.</em></p>
+    </div>
+    <div class="eyebrow gris">¿De dónde arrancás?</div>
+    <div class="ops">
+      ${ORIGENES.map((o,i) => `<button class="op" data-i="${i}">${o.titulo}
+        <span class="sub">${o.sub}</span></button>`).join("")}
+    </div>
+    ${guardada ? `<button class="btn ghost" id="seguirPartida" style="margin-top:16px">Seguir la partida anterior</button>` : ""}
+    <p class="nota">Los precios, los sueldos y la inflación son inventados pero verosímiles.
+      El país que te toca se sortea al empezar y cambia sin avisar, como el de verdad.</p>
+  </div>`;
+
+  $app.querySelectorAll(".op").forEach(b => {
+    b.onclick = () => { nuevaPartida(ORIGENES[+b.dataset.i]); siguiente(); };
+  });
+  const sp = document.getElementById("seguirPartida");
+  if(sp) sp.onclick = () => { if(cargar()) siguiente(); };
+}
+
+/* ---------- persistencia ---------- */
+function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(S)); }catch(e){} }
+function cargar(){
+  try{ const r = localStorage.getItem(CLAVE); if(!r) return false; S = JSON.parse(r); return true; }
+  catch(e){ return false; }
+}
+
+pantallaInicio();
+</script>
+</body>
+</html>

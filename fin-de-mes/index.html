@@ -1400,7 +1400,7 @@ function pantallaFinal(){
     <p class="nota">Esto es un juego. Los números son verosímiles, no son un pronóstico,
       y nada de acá es asesoramiento financiero.</p>
   </div>`;
-  localStorage.removeItem(CLAVE);
+  borrarGuardado();
   document.getElementById("otra").onclick = pantallaInicio;
 }
 
@@ -1409,7 +1409,7 @@ function pantallaFinal(){
    ========================================================================== */
 function pantallaInicio(){
   S = null; pendientes = []; pintarHud();
-  const guardada = localStorage.getItem(CLAVE);
+  const guardada = hayGuardado();
   $app.innerHTML = `<div class="fade" style="padding-top:44px">
     <div class="eyebrow">Un juego de decisiones</div>
     <h1 class="serif">Fin de Mes</h1>
@@ -1436,8 +1436,12 @@ function pantallaInicio(){
   if(sp) sp.onclick = () => { if(cargar()) siguiente(); };
 }
 
-/* ---------- persistencia ---------- */
+/* ---------- persistencia ----------
+   Safari en modo privado y algunos iframes tiran excepción al tocar localStorage.
+   Si pasa, el juego tiene que seguir andando: se pierde el guardado, nada más. */
 function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(S)); }catch(e){} }
+function hayGuardado(){ try{ return !!localStorage.getItem(CLAVE); }catch(e){ return false; } }
+function borrarGuardado(){ try{ localStorage.removeItem(CLAVE); }catch(e){} }
 function cargar(){
   try{ const r = localStorage.getItem(CLAVE); if(!r) return false; S = JSON.parse(r); return true; }
   catch(e){ return false; }
